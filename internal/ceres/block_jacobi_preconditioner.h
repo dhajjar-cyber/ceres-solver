@@ -62,8 +62,8 @@ class CERES_NO_EXPORT BlockSparseJacobiPreconditioner
   void RightMultiplyAndAccumulate(const double* x, double* y) const final {
     return m_->RightMultiplyAndAccumulate(x, y);
   }
-  int num_rows() const final { return m_->num_rows(); }
-  int num_cols() const final { return m_->num_rows(); }
+  int64_t num_rows() const final { return m_->num_rows(); }
+  int64_t num_cols() const final { return m_->num_rows(); }
   const BlockRandomAccessDiagonalMatrix& matrix() const { return *m_; }
 
  private:
@@ -85,8 +85,8 @@ class CERES_NO_EXPORT BlockCRSJacobiPreconditioner
   void RightMultiplyAndAccumulate(const double* x, double* y) const final {
     m_->RightMultiplyAndAccumulate(x, y);
   }
-  int num_rows() const final { return m_->num_rows(); }
-  int num_cols() const final { return m_->num_rows(); }
+  int64_t num_rows() const final { return m_->num_rows(); }
+  int64_t num_cols() const final { return m_->num_rows(); }
   const CompressedRowSparseMatrix& matrix() const { return *m_; }
 
  private:

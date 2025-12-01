@@ -106,7 +106,9 @@ class CERES_NO_EXPORT BlockRandomAccessSparseMatrix
   // A mapping from <row_block_id, col_block_id> to the position in
   // the values array of bsm_ where the block is stored.
   using LayoutType =
-      absl::flat_hash_map<std::pair<int64_t, int64_t>, CellInfo>;
+      std::unordered_map<std::pair<int64_t, int64_t>,
+                         CellInfo,
+                         absl::Hash<std::pair<int64_t, int64_t>>>;
   LayoutType layout_;
 
   // The underlying matrix object which actually stores the cells.

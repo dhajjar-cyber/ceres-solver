@@ -49,7 +49,7 @@ class CERES_NO_EXPORT BlockEvaluatePreparer {
   // Using Init() instead of a constructor allows for allocating this structure
   // with new[]. This is because C++ doesn't allow passing arguments to objects
   // constructed with new[] (as opposed to plain 'new').
-  void Init(int const* const* jacobian_layout,
+  void Init(int64_t const* const* jacobian_layout,
             int max_derivatives_per_residual_block);
 
   // EvaluatePreparer interface
@@ -63,7 +63,7 @@ class CERES_NO_EXPORT BlockEvaluatePreparer {
                double** jacobians);
 
  private:
-  int const* const* jacobian_layout_;
+  int64_t const* const* jacobian_layout_;
 
   // For the case that the overall jacobian is not available, but the
   // individual jacobians are requested, use a pass-through scratch evaluate

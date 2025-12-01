@@ -110,8 +110,8 @@ class CERES_NO_EXPORT SparseMatrix : public LinearOperator {
   virtual double* mutable_values() = 0;
   virtual const double* values() const = 0;
 
-  int num_rows() const override = 0;
-  int num_cols() const override = 0;
+  int64_t num_rows() const override = 0;
+  int64_t num_cols() const override = 0;
   virtual int64_t num_nonzeros() const = 0;
 };
 

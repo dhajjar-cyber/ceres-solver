@@ -58,7 +58,7 @@ namespace {
 //
 // If this is the case, this functor will not be a StrictWeakOrdering.
 struct RowColLessThan {
-  RowColLessThan(const int* rows, const int* cols) : rows(rows), cols(cols) {}
+  RowColLessThan(const int64_t* rows, const int64_t* cols) : rows(rows), cols(cols) {}
 
   bool operator()(const int64_t x, const int64_t y) const {
     if (rows[x] == rows[y]) {
@@ -67,8 +67,8 @@ struct RowColLessThan {
     return (rows[x] < rows[y]);
   }
 
-  const int* rows;
-  const int* cols;
+  const int64_t* rows;
+  const int64_t* cols;
 };
 
 void TransposeForCompressedRowSparseStructure(const int64_t num_rows,
@@ -126,8 +126,8 @@ void AddRandomBlock(const int num_rows,
                     const int row_block_begin,
                     const int col_block_begin,
                     RandomNormalFunctor&& randn,
-                    std::vector<int>* rows,
-                    std::vector<int>* cols,
+                    std::vector<int64_t>* rows,
+                    std::vector<int64_t>* cols,
                     std::vector<double>* values) {
   for (int r = 0; r < num_rows; ++r) {
     for (int c = 0; c < num_cols; ++c) {
@@ -142,8 +142,8 @@ template <class RandomNormalFunctor>
 void AddSymmetricRandomBlock(const int num_rows,
                              const int row_block_begin,
                              RandomNormalFunctor&& randn,
-                             std::vector<int>* rows,
-                             std::vector<int>* cols,
+                             std::vector<int64_t>* rows,
+                             std::vector<int64_t>* cols,
                              std::vector<double>* values) {
   for (int r = 0; r < num_rows; ++r) {
     for (int c = r; c < num_rows; ++c) {
@@ -195,10 +195,10 @@ CompressedRowSparseMatrix::FromTripletSparseMatrixTransposed(
 std::unique_ptr<CompressedRowSparseMatrix>
 CompressedRowSparseMatrix::FromTripletSparseMatrix(
     const TripletSparseMatrix& input, bool transpose) {
-  int num_rows = input.num_rows();
-  int num_cols = input.num_cols();
-  const int* rows = input.rows();
-  const int* cols = input.cols();
+  int64_t num_rows = input.num_rows();
+  int64_t num_cols = input.num_cols();
+  const int64_t* rows = input.rows();
+  const int64_t* cols = input.cols();
   const double* values = input.values();
 
   if (transpose) {
@@ -254,7 +254,7 @@ CompressedRowSparseMatrix::FromTripletSparseMatrix(
 }
 
 CompressedRowSparseMatrix::CompressedRowSparseMatrix(const double* diagonal,
-                                                     int num_rows) {
+                                                     int64_t num_rows) {
   CHECK(diagonal != nullptr);
 
   num_rows_ = num_rows;
@@ -570,8 +570,8 @@ CompressedRowSparseMatrix::CreateBlockDiagonalMatrix(
   auto matrix = std::make_unique<CompressedRowSparseMatrix>(
       num_rows, num_rows, num_nonzeros);
 
-  int* rows = matrix->mutable_rows();
-  int* cols = matrix->mutable_cols();
+  int64_t* rows = matrix->mutable_rows();
+  int64_t* cols = matrix->mutable_cols();
   double* values = matrix->mutable_values();
   std::fill(values, values + num_nonzeros, 0.0);
 
@@ -696,8 +696,8 @@ CompressedRowSparseMatrix::CreateRandomMatrix(
     col_blocks = row_blocks;
   }
 
-  std::vector<int> tsm_rows;
-  std::vector<int> tsm_cols;
+  std::vector<int64_t> tsm_rows;
+  std::vector<int64_t> tsm_cols;
   std::vector<double> tsm_values;
 
   // For ease of construction, we are going to generate the

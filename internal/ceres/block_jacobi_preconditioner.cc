@@ -128,8 +128,8 @@ BlockCRSJacobiPreconditioner::BlockCRSJacobiPreconditioner(
   const int num_col_blocks = col_blocks.size();
 
   // Populate the sparsity structure of the preconditioner matrix.
-  int* m_cols = m_->mutable_cols();
-  int* m_rows = m_->mutable_rows();
+  int64_t* m_cols = m_->mutable_cols();
+  int64_t* m_rows = m_->mutable_rows();
   m_rows[0] = 0;
   for (int i = 0, idx = 0; i < num_col_blocks; ++i) {
     // For each column block populate a diagonal block in the preconditioner.
@@ -163,11 +163,11 @@ bool BlockCRSJacobiPreconditioner::UpdateImpl(
   const int num_col_blocks = col_blocks.size();
   const int num_row_blocks = row_blocks.size();
 
-  const int* a_rows = A.rows();
-  const int* a_cols = A.cols();
+  const int64_t* a_rows = A.rows();
+  const int64_t* a_cols = A.cols();
   const double* a_values = A.values();
   double* m_values = m_->mutable_values();
-  const int* m_rows = m_->rows();
+  const int64_t* m_rows = m_->rows();
 
   m_->SetZero();
 
@@ -177,15 +177,15 @@ bool BlockCRSJacobiPreconditioner::UpdateImpl(
       num_row_blocks,
       options_.num_threads,
       [this, row_blocks, a_rows, a_cols, a_values, m_values, m_rows](int64_t i) {
-        const int row = row_blocks[i].position;
+        const int64_t row = row_blocks[i].position;
         const int row_block_size = row_blocks[i].size;
-        const int row_nnz = a_rows[row + 1] - a_rows[row];
+        const int64_t row_nnz = a_rows[row + 1] - a_rows[row];
         ConstMatrixRef row_block(
             a_values + a_rows[row], row_block_size, row_nnz);
-        int c = 0;
+        int64_t c = 0;
         while (c < row_nnz) {
-          const int idx = a_rows[row] + c;
-          const int col = a_cols[idx];
+          const int64_t idx = a_rows[row] + c;
+          const int64_t col = a_cols[idx];
           const int col_block_size = m_rows[col + 1] - m_rows[col];
 
           // We make use of the fact that the entire diagonal block is

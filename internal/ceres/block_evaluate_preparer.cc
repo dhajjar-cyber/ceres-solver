@@ -40,7 +40,7 @@
 
 namespace ceres::internal {
 
-void BlockEvaluatePreparer::Init(int const* const* jacobian_layout,
+void BlockEvaluatePreparer::Init(int64_t const* const* jacobian_layout,
                                  int max_derivatives_per_residual_block) {
   jacobian_layout_ = jacobian_layout;
   scratch_evaluate_preparer_.Init(max_derivatives_per_residual_block);
@@ -61,7 +61,7 @@ void BlockEvaluatePreparer::Prepare(const ResidualBlock* residual_block,
   double* jacobian_values =
       down_cast<BlockSparseMatrix*>(jacobian)->mutable_values();
 
-  const int* jacobian_block_offset = jacobian_layout_[residual_block_index];
+  const int64_t* jacobian_block_offset = jacobian_layout_[residual_block_index];
   const int num_parameter_blocks = residual_block->NumParameterBlocks();
   for (int j = 0; j < num_parameter_blocks; ++j) {
     if (!residual_block->parameter_blocks()[j]->IsConstant()) {

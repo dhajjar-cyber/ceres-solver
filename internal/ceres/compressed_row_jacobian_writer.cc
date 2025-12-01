@@ -124,7 +124,7 @@ std::unique_ptr<SparseMatrix> CompressedRowJacobianWriter::CreateJacobian()
   // this seems to be the only way to construct it without doing a memory
   // copy.
   int64_t* rows = jacobian->mutable_rows();
-  int* cols = jacobian->mutable_cols();
+  int64_t* cols = jacobian->mutable_cols();
 
   int64_t row_pos = 0;
   rows[0] = 0;
