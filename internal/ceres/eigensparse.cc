@@ -130,8 +130,7 @@ class EigenSparseCholeskyTemplate final : public SparseCholesky {
       values_ptr = values_.data();
     }
 
-    Eigen::Map<
-        const Eigen::SparseMatrix<typename Solver::Scalar, Eigen::ColMajor>>
+    Eigen::Map<const typename Solver::MatrixType>
         eigen_lhs(lhs->num_rows(),
                   lhs->num_rows(),
                   lhs->num_nonzeros(),
@@ -152,21 +151,22 @@ class EigenSparseCholeskyTemplate final : public SparseCholesky {
 
 std::unique_ptr<SparseCholesky> EigenSparseCholesky::Create(
     const OrderingType ordering_type) {
-  using WithAMDOrdering = Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>,
+  using SparseMatrixType = Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t>;
+  using WithAMDOrdering = Eigen::SimplicialLDLT<SparseMatrixType,
                                                 Eigen::Upper,
-                                                Eigen::AMDOrdering<int>>;
+                                                Eigen::AMDOrdering<int64_t>>;
   using WithNaturalOrdering =
-      Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>,
+      Eigen::SimplicialLDLT<SparseMatrixType,
                             Eigen::Upper,
-                            Eigen::NaturalOrdering<int>>;
+                            Eigen::NaturalOrdering<int64_t>>;
 
   if (ordering_type == OrderingType::AMD) {
     return std::make_unique<EigenSparseCholeskyTemplate<WithAMDOrdering>>();
   } else if (ordering_type == OrderingType::NESDIS) {
 #ifndef CERES_NO_EIGEN_METIS
-    using WithMetisOrdering = Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>,
+    using WithMetisOrdering = Eigen::SimplicialLDLT<SparseMatrixType,
                                                     Eigen::Upper,
-                                                    Eigen::MetisOrdering<int>>;
+                                                    Eigen::MetisOrdering<int64_t>>;
     return std::make_unique<EigenSparseCholeskyTemplate<WithMetisOrdering>>();
 #else
     LOG(FATAL)
@@ -182,20 +182,21 @@ EigenSparseCholesky::~EigenSparseCholesky() = default;
 
 std::unique_ptr<SparseCholesky> FloatEigenSparseCholesky::Create(
     const OrderingType ordering_type) {
-  using WithAMDOrdering = Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>,
+  using SparseMatrixType = Eigen::SparseMatrix<float, Eigen::ColMajor, int64_t>;
+  using WithAMDOrdering = Eigen::SimplicialLDLT<SparseMatrixType,
                                                 Eigen::Upper,
-                                                Eigen::AMDOrdering<int>>;
+                                                Eigen::AMDOrdering<int64_t>>;
   using WithNaturalOrdering =
-      Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>,
+      Eigen::SimplicialLDLT<SparseMatrixType,
                             Eigen::Upper,
-                            Eigen::NaturalOrdering<int>>;
+                            Eigen::NaturalOrdering<int64_t>>;
   if (ordering_type == OrderingType::AMD) {
     return std::make_unique<EigenSparseCholeskyTemplate<WithAMDOrdering>>();
   } else if (ordering_type == OrderingType::NESDIS) {
 #ifndef CERES_NO_EIGEN_METIS
-    using WithMetisOrdering = Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>,
+    using WithMetisOrdering = Eigen::SimplicialLDLT<SparseMatrixType,
                                                     Eigen::Upper,
-                                                    Eigen::MetisOrdering<int>>;
+                                                    Eigen::MetisOrdering<int64_t>>;
     return std::make_unique<EigenSparseCholeskyTemplate<WithMetisOrdering>>();
 #else
     LOG(FATAL)

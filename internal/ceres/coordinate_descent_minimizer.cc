@@ -167,7 +167,7 @@ void CoordinateDescentMinimizer::Minimize(const Minimizer::Options& options,
         independent_set_offsets_[i],
         independent_set_offsets_[i + 1],
         num_inner_iteration_threads,
-        [&](int thread_id, int j) {
+        [&](int thread_id, int64_t j) {
           ParameterBlock* parameter_block = parameter_blocks_[j];
           const int old_index = parameter_block->index();
           const int old_delta_offset = parameter_block->delta_offset();

@@ -82,8 +82,8 @@ class CERES_NO_EXPORT LinearOperator {
     LeftMultiplyAndAccumulate(x.data(), y.data(), context, num_threads);
   }
 
-  virtual int num_rows() const = 0;
-  virtual int num_cols() const = 0;
+  virtual int64_t num_rows() const = 0;
+  virtual int64_t num_cols() const = 0;
 };
 
 }  // namespace ceres::internal

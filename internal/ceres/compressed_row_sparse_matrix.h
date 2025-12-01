@@ -91,13 +91,13 @@ class CERES_NO_EXPORT CompressedRowSparseMatrix : public SparseMatrix {
   // double the peak memory usage.
   //
   // The storage type is set to UNSYMMETRIC.
-  CompressedRowSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros);
+  CompressedRowSparseMatrix(int64_t num_rows, int64_t num_cols, int64_t max_num_nonzeros);
 
   // Build a square sparse diagonal matrix with num_rows rows and
   // columns. The diagonal m(i,i) = diagonal(i);
   //
   // The storage type is set to UNSYMMETRIC
-  CompressedRowSparseMatrix(const double* diagonal, int num_rows);
+  CompressedRowSparseMatrix(const double* diagonal, int64_t num_rows);
 
   // SparseMatrix interface.
   ~CompressedRowSparseMatrix() override;
@@ -112,9 +112,9 @@ class CERES_NO_EXPORT CompressedRowSparseMatrix : public SparseMatrix {
   void ScaleColumns(const double* scale) final;
   void ToDenseMatrix(Matrix* dense_matrix) const final;
   void ToTextFile(FILE* file) const final;
-  int num_rows() const final { return num_rows_; }
-  int num_cols() const final { return num_cols_; }
-  int num_nonzeros() const final { return rows_[num_rows_]; }
+  int64_t num_rows() const final { return num_rows_; }
+  int64_t num_cols() const final { return num_cols_; }
+  int64_t num_nonzeros() const final { return rows_[num_rows_]; }
   const double* values() const final { return values_.data(); }
   double* mutable_values() final { return values_.data(); }
 
@@ -131,18 +131,18 @@ class CERES_NO_EXPORT CompressedRowSparseMatrix : public SparseMatrix {
   std::unique_ptr<CompressedRowSparseMatrix> Transpose() const;
 
   // Destructive array resizing method.
-  void SetMaxNumNonZeros(int num_nonzeros);
+  void SetMaxNumNonZeros(int64_t num_nonzeros);
 
   // Non-destructive array resizing method.
   void set_num_rows(const int num_rows) { num_rows_ = num_rows; }
   void set_num_cols(const int num_cols) { num_cols_ = num_cols; }
 
   // Low level access methods that expose the structure of the matrix.
-  const int* cols() const { return cols_.data(); }
-  int* mutable_cols() { return cols_.data(); }
+  const int64_t* cols() const { return cols_.data(); }
+  int64_t* mutable_cols() { return cols_.data(); }
 
-  const int* rows() const { return rows_.data(); }
-  int* mutable_rows() { return rows_.data(); }
+  const int64_t* rows() const { return rows_.data(); }
+  int64_t* mutable_rows() { return rows_.data(); }
 
   StorageType storage_type() const { return storage_type_; }
   void set_storage_type(const StorageType storage_type) {
@@ -207,10 +207,10 @@ class CERES_NO_EXPORT CompressedRowSparseMatrix : public SparseMatrix {
   static std::unique_ptr<CompressedRowSparseMatrix> FromTripletSparseMatrix(
       const TripletSparseMatrix& input, bool transpose);
 
-  int num_rows_;
-  int num_cols_;
-  std::vector<int> rows_;
-  std::vector<int> cols_;
+  int64_t num_rows_;
+  int64_t num_cols_;
+  std::vector<int64_t> rows_;
+  std::vector<int64_t> cols_;
   std::vector<double> values_;
   StorageType storage_type_;
 

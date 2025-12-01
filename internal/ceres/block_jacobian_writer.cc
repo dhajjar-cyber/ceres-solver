@@ -67,15 +67,15 @@ namespace {
 // instead of num_eliminate_blocks.
 bool BuildJacobianLayout(const Program& program,
                          int num_eliminate_blocks,
-                         std::vector<int*>* jacobian_layout,
-                         std::vector<int>* jacobian_layout_storage) {
+                         std::vector<int64_t*>* jacobian_layout,
+                         std::vector<int64_t>* jacobian_layout_storage) {
   const std::vector<ResidualBlock*>& residual_blocks =
       program.residual_blocks();
 
   // Iterate over all the active residual blocks and determine how many E blocks
   // are there. This will determine where the F blocks start in the jacobian
   // matrix. Also compute the number of jacobian blocks.
-  unsigned int f_block_pos = 0;
+  int64_t f_block_pos = 0;
   unsigned int num_jacobian_blocks = 0;
   for (auto* residual_block : residual_blocks) {
     const int num_residuals = residual_block->NumResiduals();
@@ -107,8 +107,8 @@ bool BuildJacobianLayout(const Program& program,
   jacobian_layout->resize(program.NumResidualBlocks());
   jacobian_layout_storage->resize(num_jacobian_blocks);
 
-  int e_block_pos = 0;
-  int* jacobian_pos = jacobian_layout_storage->data();
+  int64_t e_block_pos = 0;
+  int64_t* jacobian_pos = jacobian_layout_storage->data();
   std::vector<std::pair<int, int>> active_parameter_blocks;
   for (int i = 0; i < residual_blocks.size(); ++i) {
     const ResidualBlock* residual_block = residual_blocks[i];
@@ -152,9 +152,9 @@ bool BuildJacobianLayout(const Program& program,
         jacobian_pos[k] = e_block_pos;
         e_block_pos += jacobian_block_size;
       } else {
-        jacobian_pos[k] = static_cast<int>(f_block_pos);
+        jacobian_pos[k] = f_block_pos;
         f_block_pos += jacobian_block_size;
-        if (f_block_pos > std::numeric_limits<int>::max()) {
+        if (f_block_pos > std::numeric_limits<int64_t>::max()) {
           LOG(ERROR)
               << "Overflow error. Too many entries in the Jacobian matrix.";
           return false;
@@ -209,7 +209,8 @@ std::unique_ptr<SparseMatrix> BlockJacobianWriter::CreateJacobian() const {
 
   // Construct the column blocks.
   bs->cols.resize(parameter_blocks.size());
-  for (int i = 0, cursor = 0; i < parameter_blocks.size(); ++i) {
+  int64_t cursor = 0;
+  for (int i = 0; i < parameter_blocks.size(); ++i) {
     CHECK_NE(parameter_blocks[i]->index(), -1);
     CHECK(!parameter_blocks[i]->IsConstant());
     bs->cols[i].size = parameter_blocks[i]->TangentSize();
@@ -220,7 +221,7 @@ std::unique_ptr<SparseMatrix> BlockJacobianWriter::CreateJacobian() const {
   // Construct the cells in each row.
   const std::vector<ResidualBlock*>& residual_blocks =
       program_->residual_blocks();
-  int row_block_position = 0;
+  int64_t row_block_position = 0;
   bs->rows.resize(residual_blocks.size());
   for (int i = 0; i < residual_blocks.size(); ++i) {
     const ResidualBlock* residual_block = residual_blocks[i];

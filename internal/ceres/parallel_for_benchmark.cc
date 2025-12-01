@@ -45,7 +45,7 @@ static void SchedulerBenchmark(benchmark::State& state) {
   Vector x = Vector::Random(vector_size);
   for (auto _ : state) {
     ParallelFor(
-        &context, 0, vector_size, num_threads, [&x](int id) { x[id] = 0.; });
+        &context, 0, vector_size, num_threads, [&x](int64_t id) { x[id] = 0.; });
   }
   CHECK_EQ(x.squaredNorm(), 0.);
 }

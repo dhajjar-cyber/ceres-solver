@@ -107,8 +107,8 @@ LinearSolver::Summary SchurComplementSolver::SolveImpl(
 
   const CompressedRowBlockStructure* bs = A->block_structure();
   if (eliminator_ == nullptr) {
-    const int num_eliminate_blocks = options_.elimination_groups[0];
-    const int num_f_blocks = bs->cols.size() - num_eliminate_blocks;
+    const int64_t num_eliminate_blocks = options_.elimination_groups[0];
+    const int64_t num_f_blocks = bs->cols.size() - num_eliminate_blocks;
 
     InitStorage(bs);
     DetectStructure(*bs,
@@ -168,8 +168,8 @@ DenseSchurComplementSolver::~DenseSchurComplementSolver() = default;
 // complement.
 void DenseSchurComplementSolver::InitStorage(
     const CompressedRowBlockStructure* bs) {
-  const int num_eliminate_blocks = options().elimination_groups[0];
-  const int num_col_blocks = bs->cols.size();
+  const int64_t num_eliminate_blocks = options().elimination_groups[0];
+  const int64_t num_col_blocks = bs->cols.size();
   auto blocks = Tail(bs->cols, num_col_blocks - num_eliminate_blocks);
   set_lhs(std::make_unique<BlockRandomAccessDenseMatrix>(
       blocks, options().context, options().num_threads));
@@ -188,7 +188,7 @@ LinearSolver::Summary DenseSchurComplementSolver::SolveReducedLinearSystem(
   summary.message = "Success.";
 
   auto* m = down_cast<BlockRandomAccessDenseMatrix*>(mutable_lhs());
-  const int num_rows = m->num_rows();
+  const int64_t num_rows = m->num_rows();
 
   // The case where there are no f blocks, and the system is block
   // diagonal.
@@ -223,24 +223,24 @@ SparseSchurComplementSolver::~SparseSchurComplementSolver() {
 // initialize a BlockRandomAccessSparseMatrix object.
 void SparseSchurComplementSolver::InitStorage(
     const CompressedRowBlockStructure* bs) {
-  const int num_eliminate_blocks = options().elimination_groups[0];
-  const int num_col_blocks = bs->cols.size();
-  const int num_row_blocks = bs->rows.size();
+  const int64_t num_eliminate_blocks = options().elimination_groups[0];
+  const int64_t num_col_blocks = bs->cols.size();
+  const int64_t num_row_blocks = bs->rows.size();
 
   blocks_ = Tail(bs->cols, num_col_blocks - num_eliminate_blocks);
 
-  absl::btree_set<std::pair<int, int>> block_pairs;
+  absl::btree_set<std::pair<int64_t, int64_t>> block_pairs;
   for (int i = 0; i < blocks_.size(); ++i) {
     block_pairs.emplace(i, i);
   }
 
-  int r = 0;
+  int64_t r = 0;
   while (r < num_row_blocks) {
-    int e_block_id = bs->rows[r].cells.front().block_id;
+    int64_t e_block_id = bs->rows[r].cells.front().block_id;
     if (e_block_id >= num_eliminate_blocks) {
       break;
     }
-    std::vector<int> f_blocks;
+    std::vector<int64_t> f_blocks;
 
     // Add to the chunk until the first block in the row is
     // different than the one in the first row for the chunk.
@@ -274,9 +274,9 @@ void SparseSchurComplementSolver::InitStorage(
     const CompressedRow& row = bs->rows[r];
     CHECK_GE(row.cells.front().block_id, num_eliminate_blocks);
     for (int i = 0; i < row.cells.size(); ++i) {
-      int r_block1_id = row.cells[i].block_id - num_eliminate_blocks;
+      int64_t r_block1_id = row.cells[i].block_id - num_eliminate_blocks;
       for (const auto& cell : row.cells) {
-        int r_block2_id = cell.block_id - num_eliminate_blocks;
+        int64_t r_block2_id = cell.block_id - num_eliminate_blocks;
         if (r_block1_id <= r_block2_id) {
           block_pairs.emplace(r_block1_id, r_block2_id);
         }
@@ -338,7 +338,7 @@ LinearSolver::Summary
 SparseSchurComplementSolver::SolveReducedLinearSystemUsingConjugateGradients(
     const LinearSolver::PerSolveOptions& per_solve_options, double* solution) {
   CHECK(options().use_explicit_schur_complement);
-  const int num_rows = lhs()->num_rows();
+  const int64_t num_rows = lhs()->num_rows();
   // The case where there are no f blocks, and the system is block
   // diagonal.
   if (num_rows == 0) {

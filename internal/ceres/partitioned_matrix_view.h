@@ -113,14 +113,14 @@ class CERES_NO_EXPORT PartitionedMatrixViewBase {
       BlockSparseMatrix* block_diagonal) const = 0;
 
   // clang-format off
-  virtual int num_col_blocks_e() const = 0;
-  virtual int num_col_blocks_f() const = 0;
-  virtual int num_cols_e()       const = 0;
-  virtual int num_cols_f()       const = 0;
-  virtual int num_rows()         const = 0;
-  virtual int num_cols()         const = 0;
-  virtual const std::vector<int>& e_cols_partition() const = 0;
-  virtual const std::vector<int>& f_cols_partition() const = 0;
+  virtual int64_t num_col_blocks_e() const = 0;
+  virtual int64_t num_col_blocks_f() const = 0;
+  virtual int64_t num_cols_e()       const = 0;
+  virtual int64_t num_cols_f()       const = 0;
+  virtual int64_t num_rows()         const = 0;
+  virtual int64_t num_cols()         const = 0;
+  virtual const std::vector<int64_t>& e_cols_partition() const = 0;
+  virtual const std::vector<int64_t>& f_cols_partition() const = 0;
   // clang-format on
 
   static std::unique_ptr<PartitionedMatrixViewBase> Create(
@@ -175,33 +175,33 @@ class CERES_NO_EXPORT PartitionedMatrixView final
   void UpdateBlockDiagonalFtFMultiThreaded(
       BlockSparseMatrix* block_diagonal) const;
   // clang-format off
-  int num_col_blocks_e() const final { return num_col_blocks_e_;  }
-  int num_col_blocks_f() const final { return num_col_blocks_f_;  }
-  int num_cols_e()       const final { return num_cols_e_;        }
-  int num_cols_f()       const final { return num_cols_f_;        }
-  int num_rows()         const final { return matrix_.num_rows(); }
-  int num_cols()         const final { return matrix_.num_cols(); }
+  int64_t num_col_blocks_e() const final { return num_col_blocks_e_;  }
+  int64_t num_col_blocks_f() const final { return num_col_blocks_f_;  }
+  int64_t num_cols_e()       const final { return num_cols_e_;        }
+  int64_t num_cols_f()       const final { return num_cols_f_;        }
+  int64_t num_rows()         const final { return matrix_.num_rows(); }
+  int64_t num_cols()         const final { return matrix_.num_cols(); }
   // clang-format on
-  const std::vector<int>& e_cols_partition() const final {
+  const std::vector<int64_t>& e_cols_partition() const final {
     return e_cols_partition_;
   }
-  const std::vector<int>& f_cols_partition() const final {
+  const std::vector<int64_t>& f_cols_partition() const final {
     return f_cols_partition_;
   }
 
  private:
   std::unique_ptr<BlockSparseMatrix> CreateBlockDiagonalMatrixLayout(
-      int start_col_block, int end_col_block) const;
+      int64_t start_col_block, int64_t end_col_block) const;
 
   const LinearSolver::Options options_;
   const BlockSparseMatrix& matrix_;
-  int num_row_blocks_e_;
-  int num_col_blocks_e_;
-  int num_col_blocks_f_;
-  int num_cols_e_;
-  int num_cols_f_;
-  std::vector<int> e_cols_partition_;
-  std::vector<int> f_cols_partition_;
+  int64_t num_row_blocks_e_;
+  int64_t num_col_blocks_e_;
+  int64_t num_col_blocks_f_;
+  int64_t num_cols_e_;
+  int64_t num_cols_f_;
+  std::vector<int64_t> e_cols_partition_;
+  std::vector<int64_t> f_cols_partition_;
 };
 
 }  // namespace ceres::internal

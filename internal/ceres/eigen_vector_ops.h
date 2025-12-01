@@ -53,7 +53,7 @@ inline double Norm(const Eigen::DenseBase<Derived>& x,
       0,
       x.rows(),
       num_threads,
-      [&x, &norms](int thread_id, std::tuple<int, int> range) {
+      [&x, &norms](int thread_id, std::tuple<int64_t, int64_t> range) {
         auto [start, end] = range;
         norms[thread_id] += x.segment(start, end - start).squaredNorm();
       },
@@ -83,9 +83,9 @@ inline double Dot(const VectorLikeX& x,
       0,
       x.rows(),
       num_threads,
-      [&x, &y, &dots](int thread_id, std::tuple<int, int> range) {
+      [&x, &y, &dots](int thread_id, std::tuple<int64_t, int64_t> range) {
         auto [start, end] = range;
-        const int block_size = end - start;
+        const int64_t block_size = end - start;
         const auto& x_block = x.segment(start, block_size);
         const auto& y_block = y.segment(start, block_size);
         dots[thread_id] += x_block.dot(y_block);

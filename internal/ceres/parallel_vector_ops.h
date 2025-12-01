@@ -61,13 +61,13 @@ void ParallelAssign(ContextImpl* context,
   static_assert(LhsExpression::ColsAtCompileTime == 1);
   static_assert(RhsExpression::ColsAtCompileTime == 1);
   CHECK_EQ(lhs.rows(), rhs.rows());
-  const int num_rows = lhs.rows();
+  const int64_t num_rows = lhs.rows();
   ParallelFor(
       context,
       0,
       num_rows,
       num_threads,
-      [&lhs, &rhs](const std::tuple<int, int>& range) {
+      [&lhs, &rhs](const std::tuple<int64_t, int64_t>& range) {
         auto [start, end] = range;
         lhs.segment(start, end - start) = rhs.segment(start, end - start);
       },
@@ -84,7 +84,7 @@ void ParallelSetZero(ContextImpl* context,
 void ParallelSetZero(ContextImpl* context,
                      int num_threads,
                      double* values,
-                     int num_values);
+                     int64_t num_values);
 
 }  // namespace ceres::internal
 

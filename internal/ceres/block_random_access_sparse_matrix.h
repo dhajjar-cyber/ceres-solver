@@ -38,6 +38,8 @@
 #include <vector>
 
 #include "absl/container/btree_set.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/hash/hash.h"
 #include "ceres/block_random_access_matrix.h"
 #include "ceres/block_sparse_matrix.h"
 #include "ceres/block_structure.h"
@@ -61,7 +63,7 @@ class CERES_NO_EXPORT BlockRandomAccessSparseMatrix
   // of this matrix.
   BlockRandomAccessSparseMatrix(
       const std::vector<Block>& blocks,
-      const absl::btree_set<std::pair<int, int>>& block_pairs,
+      const absl::btree_set<std::pair<int64_t, int64_t>>& block_pairs,
       ContextImpl* context,
       int num_threads);
 
@@ -70,8 +72,8 @@ class CERES_NO_EXPORT BlockRandomAccessSparseMatrix
   ~BlockRandomAccessSparseMatrix() override = default;
 
   // BlockRandomAccessMatrix Interface.
-  CellInfo* GetCell(int row_block_id,
-                    int col_block_id,
+  CellInfo* GetCell(int64_t row_block_id,
+                    int64_t col_block_id,
                     int* row,
                     int* col,
                     int* row_stride,
@@ -88,25 +90,14 @@ class CERES_NO_EXPORT BlockRandomAccessSparseMatrix
   void SymmetricRightMultiplyAndAccumulate(const double* x, double* y) const;
 
   // Since the matrix is square, num_rows() == num_cols().
-  int num_rows() const final { return bsm_->num_rows(); }
-  int num_cols() const final { return bsm_->num_cols(); }
+  int64_t num_rows() const final { return bsm_->num_rows(); }
+  int64_t num_cols() const final { return bsm_->num_cols(); }
 
   // Access to the underlying matrix object.
   const BlockSparseMatrix* matrix() const { return bsm_.get(); }
   BlockSparseMatrix* mutable_matrix() { return bsm_.get(); }
 
  private:
-  int64_t IntPairToInt64(int row, int col) const {
-    return row * kRowShift + col;
-  }
-
-  void Int64ToIntPair(int64_t index, int* row, int* col) const {
-    *row = index / kRowShift;
-    *col = index % kRowShift;
-  }
-
-  constexpr static int64_t kRowShift{1ll << 32};
-
   // row/column block sizes.
   const std::vector<Block> blocks_;
   ContextImpl* context_ = nullptr;
@@ -114,7 +105,8 @@ class CERES_NO_EXPORT BlockRandomAccessSparseMatrix
 
   // A mapping from <row_block_id, col_block_id> to the position in
   // the values array of bsm_ where the block is stored.
-  using LayoutType = std::unordered_map<std::int64_t, CellInfo>;
+  using LayoutType =
+      absl::flat_hash_map<std::pair<int64_t, int64_t>, CellInfo>;
   LayoutType layout_;
 
   // The underlying matrix object which actually stores the cells.

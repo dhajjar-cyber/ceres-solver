@@ -129,10 +129,10 @@ class CERES_NO_EXPORT BlockJacobianWriter {
   //
   // which indicates that dr/dx is located at values_[0], and dr/dz is at
   // values_[12]. See BlockEvaluatePreparer::Prepare()'s comments about 'j'.
-  std::vector<int*> jacobian_layout_;
+  std::vector<int64_t*> jacobian_layout_;
 
   // The pointers in jacobian_layout_ point directly into this vector.
-  std::vector<int> jacobian_layout_storage_;
+  std::vector<int64_t> jacobian_layout_storage_;
 
   // The constructor computes the layout of the Jacobian, and this bool keeps
   // track of whether the computation of the layout completed successfully or

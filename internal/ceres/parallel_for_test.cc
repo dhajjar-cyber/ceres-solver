@@ -66,7 +66,7 @@ TEST(ParallelFor, NumThreads) {
 
   for (int num_threads = 1; num_threads <= 8; ++num_threads) {
     std::vector<int> values(size, 0);
-    ParallelFor(&context, 0, size, num_threads, [&values](int i) {
+    ParallelFor(&context, 0, size, num_threads, [&values](int64_t i) {
       values[i] = std::sqrt(i);
     });
     EXPECT_THAT(values, ElementsAreArray(expected_results));
@@ -87,7 +87,7 @@ TEST(ParallelForWithRange, NumThreads) {
   for (int num_threads = 1; num_threads <= 8; ++num_threads) {
     std::vector<int> values(size, 0);
     ParallelFor(
-        &context, 0, size, num_threads, [&values](std::tuple<int, int> range) {
+        &context, 0, size, num_threads, [&values](std::tuple<int64_t, int64_t> range) {
           auto [start, end] = range;
           for (int i = start; i < end; ++i) values[i] = std::sqrt(i);
         });
@@ -109,7 +109,7 @@ TEST(ParallelForWithRange, MinimalSize) {
         0,
         size,
         kNumThreads,
-        [&failed, kMinBlockSize](std::tuple<int, int> range) {
+        [&failed, kMinBlockSize](std::tuple<int64_t, int64_t> range) {
           auto [start, end] = range;
           if (end - start < kMinBlockSize) failed = true;
         },
@@ -133,7 +133,7 @@ TEST(ParallelForWithThreadId, NumThreads) {
   for (int num_threads = 1; num_threads <= 8; ++num_threads) {
     std::vector<int> values(size, 0);
     ParallelFor(
-        &context, 0, size, num_threads, [&values](int thread_id, int i) {
+        &context, 0, size, num_threads, [&values](int thread_id, int64_t i) {
           values[i] = std::sqrt(i);
         });
     EXPECT_THAT(values, ElementsAreArray(expected_results));
@@ -147,9 +147,9 @@ TEST(ParallelFor, NestedParallelForDeadlock) {
 
   // Increment each element in the 2D matrix.
   std::vector<std::vector<int>> x(3, {1, 2, 3});
-  ParallelFor(&context, 0, 3, 2, [&x, &context](int i) {
+  ParallelFor(&context, 0, 3, 2, [&x, &context](int64_t i) {
     std::vector<int>& y = x.at(i);
-    ParallelFor(&context, 0, 3, 2, [&y](int j) { ++y.at(j); });
+    ParallelFor(&context, 0, 3, 2, [&y](int64_t j) { ++y.at(j); });
   });
 
   const std::vector<int> results = {2, 3, 4};
@@ -166,9 +166,9 @@ TEST(ParallelForWithThreadId, NestedParallelForDeadlock) {
 
   // Increment each element in the 2D matrix.
   std::vector<std::vector<int>> x(3, {1, 2, 3});
-  ParallelFor(&context, 0, 3, 2, [&x, &context](int thread_id, int i) {
+  ParallelFor(&context, 0, 3, 2, [&x, &context](int thread_id, int64_t i) {
     std::vector<int>& y = x.at(i);
-    ParallelFor(&context, 0, 3, 2, [&y](int thread_id, int j) { ++y.at(j); });
+    ParallelFor(&context, 0, 3, 2, [&y](int thread_id, int64_t j) { ++y.at(j); });
   });
 
   const std::vector<int> results = {2, 3, 4};
@@ -198,7 +198,7 @@ TEST(ParallelForWithThreadId, UniqueThreadIds) {
               0,
               2,
               2,
-              [&x, &mutex, &condition, &count](int thread_id, int i) {
+              [&x, &mutex, &condition, &count](int thread_id, int64_t i) {
                 std::unique_lock<std::mutex> lock(mutex);
                 x[i] = thread_id;
                 ++count;

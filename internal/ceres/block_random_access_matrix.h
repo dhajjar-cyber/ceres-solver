@@ -105,8 +105,8 @@ class CERES_NO_EXPORT BlockRandomAccessMatrix {
   // The size of the cell is row_block_size x col_block_size is
   // assumed known to the caller. row_block_size less than or equal to
   // row_stride and col_block_size is upper bounded by col_stride.
-  virtual CellInfo* GetCell(int row_block_id,
-                            int col_block_id,
+  virtual CellInfo* GetCell(int64_t row_block_id,
+                            int64_t col_block_id,
                             int* row,
                             int* col,
                             int* row_stride,
@@ -118,8 +118,8 @@ class CERES_NO_EXPORT BlockRandomAccessMatrix {
 
   // Number of scalar rows and columns in the matrix, i.e the sum of
   // all row blocks and column block sizes respectively.
-  virtual int num_rows() const = 0;
-  virtual int num_cols() const = 0;
+  virtual int64_t num_rows() const = 0;
+  virtual int64_t num_cols() const = 0;
 };
 
 }  // namespace ceres::internal

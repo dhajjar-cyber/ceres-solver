@@ -67,9 +67,9 @@ class CERES_NO_EXPORT DynamicCompressedRowSparseMatrix final
   // using `InsertEntry`. Finally, once all elements have been inserted,
   // `Finalize` must be called to make the underlying
   // `CompressedRowSparseMatrix` consistent.
-  DynamicCompressedRowSparseMatrix(int num_rows,
-                                   int num_cols,
-                                   int initial_max_num_nonzeros);
+  DynamicCompressedRowSparseMatrix(int64_t num_rows,
+                                   int64_t num_cols,
+                                   int64_t initial_max_num_nonzeros);
 
   // Insert an entry at a given row and column position. This method is
   // thread-safe across rows i.e. different threads can insert values
@@ -78,11 +78,11 @@ class CERES_NO_EXPORT DynamicCompressedRowSparseMatrix final
   // entries at the specified row and column position. Duplicate entries
   // for a given row and column position will result in undefined
   // behavior.
-  void InsertEntry(int row, int col, const double& value);
+  void InsertEntry(int64_t row, int64_t col, const double& value);
 
   // Clear all entries for rows, starting from row index `row_start`
   // and proceeding for `num_rows`.
-  void ClearRows(int row_start, int num_rows);
+  void ClearRows(int64_t row_start, int64_t num_rows);
 
   // Make the underlying internal `CompressedRowSparseMatrix` data structures
   // consistent. Additional space for non-zero entries in the
@@ -90,10 +90,10 @@ class CERES_NO_EXPORT DynamicCompressedRowSparseMatrix final
   // `num_additional_elements`. This is useful when it is known that rows will
   // be appended to the `CompressedRowSparseMatrix` (e.g. appending a diagonal
   // matrix to the jacobian) as it prevents need for future reallocation.
-  void Finalize(int num_additional_elements);
+  void Finalize(int64_t num_additional_elements);
 
  private:
-  std::vector<std::vector<int>> dynamic_cols_;
+  std::vector<std::vector<int64_t>> dynamic_cols_;
   std::vector<std::vector<double>> dynamic_values_;
 };
 

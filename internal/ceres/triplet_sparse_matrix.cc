@@ -50,9 +50,9 @@ TripletSparseMatrix::TripletSparseMatrix()
 
 TripletSparseMatrix::~TripletSparseMatrix() = default;
 
-TripletSparseMatrix::TripletSparseMatrix(int num_rows,
-                                         int num_cols,
-                                         int max_num_nonzeros)
+TripletSparseMatrix::TripletSparseMatrix(int64_t num_rows,
+                                         int64_t num_cols,
+                                         int64_t max_num_nonzeros)
     : num_rows_(num_rows),
       num_cols_(num_cols),
       max_num_nonzeros_(max_num_nonzeros),
@@ -64,10 +64,10 @@ TripletSparseMatrix::TripletSparseMatrix(int num_rows,
   AllocateMemory();
 }
 
-TripletSparseMatrix::TripletSparseMatrix(const int num_rows,
-                                         const int num_cols,
-                                         const std::vector<int>& rows,
-                                         const std::vector<int>& cols,
+TripletSparseMatrix::TripletSparseMatrix(const int64_t num_rows,
+                                         const int64_t num_cols,
+                                         const std::vector<int64_t>& rows,
+                                         const std::vector<int64_t>& cols,
                                          const std::vector<double>& values)
     : num_rows_(num_rows),
       num_cols_(num_cols),
@@ -120,7 +120,7 @@ bool TripletSparseMatrix::AllTripletsWithinBounds() const {
   return true;
 }
 
-void TripletSparseMatrix::Reserve(int new_max_num_nonzeros) {
+void TripletSparseMatrix::Reserve(int64_t new_max_num_nonzeros) {
   CHECK_LE(num_nonzeros_, new_max_num_nonzeros)
       << "Reallocation will cause data loss";
 
@@ -134,7 +134,7 @@ void TripletSparseMatrix::Reserve(int new_max_num_nonzeros) {
   std::unique_ptr<double[]> new_values =
       std::make_unique<double[]>(new_max_num_nonzeros);
 
-  for (int i = 0; i < num_nonzeros_; ++i) {
+  for (int64_t i = 0; i < num_nonzeros_; ++i) {
     new_rows[i] = rows_[i];
     new_cols[i] = cols_[i];
     new_values[i] = values_[i];
@@ -151,20 +151,20 @@ void TripletSparseMatrix::SetZero() {
   num_nonzeros_ = 0;
 }
 
-void TripletSparseMatrix::set_num_nonzeros(int num_nonzeros) {
+void TripletSparseMatrix::set_num_nonzeros(int64_t num_nonzeros) {
   CHECK_GE(num_nonzeros, 0);
   CHECK_LE(num_nonzeros, max_num_nonzeros_);
   num_nonzeros_ = num_nonzeros;
 }
 
 void TripletSparseMatrix::AllocateMemory() {
-  rows_ = std::make_unique<int[]>(max_num_nonzeros_);
-  cols_ = std::make_unique<int[]>(max_num_nonzeros_);
+  rows_ = std::make_unique<int64_t[]>(max_num_nonzeros_);
+  cols_ = std::make_unique<int64_t[]>(max_num_nonzeros_);
   values_ = std::make_unique<double[]>(max_num_nonzeros_);
 }
 
 void TripletSparseMatrix::CopyData(const TripletSparseMatrix& orig) {
-  for (int i = 0; i < num_nonzeros_; ++i) {
+  for (int64_t i = 0; i < num_nonzeros_; ++i) {
     rows_[i] = orig.rows_[i];
     cols_[i] = orig.cols_[i];
     values_[i] = orig.values_[i];
@@ -209,7 +209,7 @@ void TripletSparseMatrix::ToDenseMatrix(Matrix* dense_matrix) const {
   dense_matrix->resize(num_rows_, num_cols_);
   dense_matrix->setZero();
   Matrix& m = *dense_matrix;
-  for (int i = 0; i < num_nonzeros_; ++i) {
+  for (int64_t i = 0; i < num_nonzeros_; ++i) {
     m(rows_[i], cols_[i]) += values_[i];
   }
 }
@@ -217,7 +217,7 @@ void TripletSparseMatrix::ToDenseMatrix(Matrix* dense_matrix) const {
 void TripletSparseMatrix::AppendRows(const TripletSparseMatrix& B) {
   CHECK_EQ(B.num_cols(), num_cols_);
   Reserve(num_nonzeros_ + B.num_nonzeros_);
-  for (int i = 0; i < B.num_nonzeros_; ++i) {
+  for (int64_t i = 0; i < B.num_nonzeros_; ++i) {
     rows_.get()[num_nonzeros_] = B.rows()[i] + num_rows_;
     cols_.get()[num_nonzeros_] = B.cols()[i];
     values_.get()[num_nonzeros_++] = B.values()[i];
@@ -228,7 +228,7 @@ void TripletSparseMatrix::AppendRows(const TripletSparseMatrix& B) {
 void TripletSparseMatrix::AppendCols(const TripletSparseMatrix& B) {
   CHECK_EQ(B.num_rows(), num_rows_);
   Reserve(num_nonzeros_ + B.num_nonzeros_);
-  for (int i = 0; i < B.num_nonzeros_; ++i, ++num_nonzeros_) {
+  for (int64_t i = 0; i < B.num_nonzeros_; ++i, ++num_nonzeros_) {
     rows_.get()[num_nonzeros_] = B.rows()[i];
     cols_.get()[num_nonzeros_] = B.cols()[i] + num_cols_;
     values_.get()[num_nonzeros_] = B.values()[i];
@@ -236,7 +236,7 @@ void TripletSparseMatrix::AppendCols(const TripletSparseMatrix& B) {
   num_cols_ = num_cols_ + B.num_cols();
 }
 
-void TripletSparseMatrix::Resize(int new_num_rows, int new_num_cols) {
+void TripletSparseMatrix::Resize(int64_t new_num_rows, int64_t new_num_cols) {
   if ((new_num_rows >= num_rows_) && (new_num_cols >= num_cols_)) {
     num_rows_ = new_num_rows;
     num_cols_ = new_num_cols;
@@ -246,12 +246,12 @@ void TripletSparseMatrix::Resize(int new_num_rows, int new_num_cols) {
   num_rows_ = new_num_rows;
   num_cols_ = new_num_cols;
 
-  int* r_ptr = rows_.get();
-  int* c_ptr = cols_.get();
+  int64_t* r_ptr = rows_.get();
+  int64_t* c_ptr = cols_.get();
   double* v_ptr = values_.get();
 
-  int dropped_terms = 0;
-  for (int i = 0; i < num_nonzeros_; ++i) {
+  int64_t dropped_terms = 0;
+  for (int64_t i = 0; i < num_nonzeros_; ++i) {
     if ((r_ptr[i] < num_rows_) && (c_ptr[i] < num_cols_)) {
       if (dropped_terms) {
         r_ptr[i - dropped_terms] = r_ptr[i];
@@ -267,10 +267,10 @@ void TripletSparseMatrix::Resize(int new_num_rows, int new_num_cols) {
 
 std::unique_ptr<TripletSparseMatrix>
 TripletSparseMatrix::CreateSparseDiagonalMatrix(const double* values,
-                                                int num_rows) {
+                                                int64_t num_rows) {
   std::unique_ptr<TripletSparseMatrix> m =
       std::make_unique<TripletSparseMatrix>(num_rows, num_rows, num_rows);
-  for (int i = 0; i < num_rows; ++i) {
+  for (int64_t i = 0; i < num_rows; ++i) {
     m->mutable_rows()[i] = i;
     m->mutable_cols()[i] = i;
     m->mutable_values()[i] = values[i];
@@ -281,7 +281,7 @@ TripletSparseMatrix::CreateSparseDiagonalMatrix(const double* values,
 
 void TripletSparseMatrix::ToTextFile(FILE* file) const {
   CHECK(file != nullptr);
-  for (int i = 0; i < num_nonzeros_; ++i) {
+  for (int64_t i = 0; i < num_nonzeros_; ++i) {
     absl::FPrintF(file, "% 10d % 10d %17f\n", rows_[i], cols_[i], values_[i]);
   }
 }
@@ -289,22 +289,22 @@ void TripletSparseMatrix::ToTextFile(FILE* file) const {
 std::unique_ptr<TripletSparseMatrix> TripletSparseMatrix::CreateFromTextFile(
     FILE* file) {
   CHECK(file != nullptr);
-  int num_rows = 0;
-  int num_cols = 0;
-  std::vector<int> rows;
-  std::vector<int> cols;
+  int64_t num_rows = 0;
+  int64_t num_cols = 0;
+  std::vector<int64_t> rows;
+  std::vector<int64_t> cols;
   std::vector<double> values;
   while (true) {
-    int row, col;
+    long long row, col;
     double value;
-    if (fscanf(file, "%d %d %lf", &row, &col, &value) != 3) {
+    if (fscanf(file, "%lld %lld %lf", &row, &col, &value) != 3) {
       break;
     }
     rows.push_back(row);
     cols.push_back(col);
     values.push_back(value);
-    num_rows = std::max(num_rows, row + 1);
-    num_cols = std::max(num_cols, col + 1);
+    num_rows = std::max(num_rows, static_cast<int64_t>(row) + 1);
+    num_cols = std::max(num_cols, static_cast<int64_t>(col) + 1);
   }
   VLOG(1) << "Read " << rows.size() << " nonzeros from file.";
   return std::make_unique<TripletSparseMatrix>(
@@ -319,8 +319,8 @@ std::unique_ptr<TripletSparseMatrix> TripletSparseMatrix::CreateRandomMatrix(
   CHECK_GT(options.density, 0.0);
   CHECK_LE(options.density, 1.0);
 
-  std::vector<int> rows;
-  std::vector<int> cols;
+  std::vector<int64_t> rows;
+  std::vector<int64_t> cols;
   std::vector<double> values;
   std::uniform_real_distribution<double> uniform01(0.0, 1.0);
   std::normal_distribution<double> standard_normal;
@@ -328,8 +328,8 @@ std::unique_ptr<TripletSparseMatrix> TripletSparseMatrix::CreateRandomMatrix(
     rows.clear();
     cols.clear();
     values.clear();
-    for (int r = 0; r < options.num_rows; ++r) {
-      for (int c = 0; c < options.num_cols; ++c) {
+    for (int64_t r = 0; r < options.num_rows; ++r) {
+      for (int64_t c = 0; c < options.num_cols; ++c) {
         if (uniform01(prng) <= options.density) {
           rows.push_back(r);
           cols.push_back(c);

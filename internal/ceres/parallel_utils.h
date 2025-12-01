@@ -44,26 +44,26 @@ namespace ceres::internal {
 // }
 // Naively using ParallelFor to parallelise those loops might look like
 // ParallelFor(..., 0, n * n, num_threads,
-//   [](int thread_id, int k) {
+//   [](int thread_id, int64_t k) {
 //     int i = k / n, j = k % n;
 //     if (j < i) return;
 //     ...
 //    });
 // but these empty work items can lead to very unbalanced threading. Instead,
 // do this:
-// int actual_work_items = (n * (n + 1)) / 2;
+// int64_t actual_work_items = (n * (n + 1)) / 2;
 // ParallelFor(..., 0, actual_work_items, num_threads,
-//   [](int thread_id, int k) {
-//     int i, j;
-//     UnfoldIteration(k, n, &i, &j);
+//   [](int thread_id, int64_t k) {
+//     int64_t i, j;
+//     LinearIndexToUpperTriangularIndex(k, n, &i, &j);
 //     ...
 //    });
 // which in each iteration will produce i and j satisfying
 // 0 <= i <= j < n
-CERES_NO_EXPORT void LinearIndexToUpperTriangularIndex(int k,
-                                                       int n,
-                                                       int* i,
-                                                       int* j);
+CERES_NO_EXPORT void LinearIndexToUpperTriangularIndex(int64_t k,
+                                                       int64_t n,
+                                                       int64_t* i,
+                                                       int64_t* j);
 
 }  // namespace ceres::internal
 

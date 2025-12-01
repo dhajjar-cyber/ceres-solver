@@ -45,26 +45,26 @@ namespace ceres::internal {
 // cumulative_cost_data element with index from range[start; end), and should be
 // non-decreasing. Partition of the range is returned via partition argument
 template <typename CumulativeCostData, typename CumulativeCostFun>
-bool MaxPartitionCostIsFeasible(int start,
-                                int end,
+bool MaxPartitionCostIsFeasible(int64_t start,
+                                int64_t end,
                                 int max_num_partitions,
-                                int max_partition_cost,
-                                int cumulative_cost_offset,
+                                int64_t max_partition_cost,
+                                int64_t cumulative_cost_offset,
                                 const CumulativeCostData* cumulative_cost_data,
                                 CumulativeCostFun&& cumulative_cost_fun,
-                                std::vector<int>* partition) {
+                                std::vector<int64_t>* partition) {
   partition->clear();
   partition->push_back(start);
-  int partition_start = start;
-  int cost_offset = cumulative_cost_offset;
+  int64_t partition_start = start;
+  int64_t cost_offset = cumulative_cost_offset;
 
   while (partition_start < end) {
     // Already have max_num_partitions
     if (partition->size() > max_num_partitions) {
       return false;
     }
-    const int target = max_partition_cost + cost_offset;
-    const int partition_end =
+    const int64_t target = max_partition_cost + cost_offset;
+    const int64_t partition_end =
         std::partition_point(
             cumulative_cost_data + partition_start,
             cumulative_cost_data + end,
@@ -77,7 +77,7 @@ bool MaxPartitionCostIsFeasible(int start,
       return false;
     }
 
-    const int cost_last =
+    const int64_t cost_last =
         cumulative_cost_fun(cumulative_cost_data[partition_end - 1]);
     partition->push_back(partition_end);
     partition_start = partition_end;
@@ -92,9 +92,9 @@ bool MaxPartitionCostIsFeasible(int start,
 // by cumulative_cost_data objects, and are returned by cumulative_cost_fun call
 // with a reference to one of the objects from range [start, end)
 template <typename CumulativeCostData, typename CumulativeCostFun>
-std::vector<int> PartitionRangeForParallelFor(
-    int start,
-    int end,
+std::vector<int64_t> PartitionRangeForParallelFor(
+    int64_t start,
+    int64_t end,
     int max_num_partitions,
     const CumulativeCostData* cumulative_cost_data,
     CumulativeCostFun&& cumulative_cost_fun) {
@@ -102,28 +102,28 @@ std::vector<int> PartitionRangeForParallelFor(
   // and obtain corresponding partition using MaxPartitionCostIsFeasible
   // function. In order to find the lowest admissible value, a binary search
   // over all potentially optimal cost values is being performed
-  const int cumulative_cost_last =
+  const int64_t cumulative_cost_last =
       cumulative_cost_fun(cumulative_cost_data[end - 1]);
-  const int cumulative_cost_offset =
+  const int64_t cumulative_cost_offset =
       start ? cumulative_cost_fun(cumulative_cost_data[start - 1]) : 0;
-  const int total_cost = cumulative_cost_last - cumulative_cost_offset;
+  const int64_t total_cost = cumulative_cost_last - cumulative_cost_offset;
 
   // Minimal maximal partition cost is not smaller than the average
   // We will use non-inclusive lower bound
-  int partition_cost_lower_bound = total_cost / max_num_partitions - 1;
+  int64_t partition_cost_lower_bound = total_cost / max_num_partitions - 1;
   // Minimal maximal partition cost is not larger than the total cost
   // Upper bound is inclusive
-  int partition_cost_upper_bound = total_cost;
+  int64_t partition_cost_upper_bound = total_cost;
 
-  std::vector<int> partition;
+  std::vector<int64_t> partition;
   // Range partition corresponding to the latest evaluated upper bound.
   // A single segment covering the whole input interval [start, end) corresponds
   // to minimal maximal partition cost of total_cost.
-  std::vector<int> partition_upper_bound = {start, end};
+  std::vector<int64_t> partition_upper_bound = {start, end};
   // Binary search over partition cost, returning the lowest admissible cost
   while (partition_cost_upper_bound - partition_cost_lower_bound > 1) {
     partition.reserve(max_num_partitions + 1);
-    const int partition_cost =
+    const int64_t partition_cost =
         partition_cost_lower_bound +
         (partition_cost_upper_bound - partition_cost_lower_bound) / 2;
     bool admissible = MaxPartitionCostIsFeasible(

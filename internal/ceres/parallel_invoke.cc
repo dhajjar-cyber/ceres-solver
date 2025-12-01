@@ -62,14 +62,14 @@ void BlockUntilFinished::Block() {
       lock, [this]() { return num_total_jobs_finished_ == num_total_jobs_; });
 }
 
-ParallelInvokeState::ParallelInvokeState(int start,
-                                         int end,
+ParallelInvokeState::ParallelInvokeState(int64_t start,
+                                         int64_t end,
                                          int num_work_blocks)
     : start(start),
       end(end),
       num_work_blocks(num_work_blocks),
       base_block_size((end - start) / num_work_blocks),
-      num_base_p1_sized_blocks((end - start) % num_work_blocks),
+      num_base_p1_sized_blocks(static_cast<int>((end - start) % num_work_blocks)),
       block_id(0),
       thread_id(0),
       block_until_finished(num_work_blocks) {}

@@ -32,7 +32,7 @@
 
 namespace ceres::internal {
 
-void LinearIndexToUpperTriangularIndex(int k, int n, int* i, int* j) {
+void LinearIndexToUpperTriangularIndex(int64_t k, int64_t n, int64_t* i, int64_t* j) {
   // This works by unfolding a rectangle into a triangle.
   // Say n is even. 4 is a nice even number. The 10 i,j pairs that we
   // want to produce are:
@@ -60,9 +60,9 @@ void LinearIndexToUpperTriangularIndex(int k, int n, int* i, int* j) {
   // location.
   if (n & 1) {
     // Odd n. The tip of the triangle is on row 1.
-    int w = n;  // Width of the rectangle to unfold
-    int i0 = k / w;
-    int j0 = k % w;
+    int64_t w = n;  // Width of the rectangle to unfold
+    int64_t i0 = k / w;
+    int64_t j0 = k % w;
     if (j0 >= i0) {
       *i = i0;
       *j = j0;
@@ -72,9 +72,9 @@ void LinearIndexToUpperTriangularIndex(int k, int n, int* i, int* j) {
     }
   } else {
     // Even n. The tip of the triangle is on row 0, making it one wider.
-    int w = n + 1;
-    int i0 = k / w;
-    int j0 = k % w;
+    int64_t w = n + 1;
+    int64_t i0 = k / w;
+    int64_t j0 = k % w;
     if (j0 > i0) {
       *i = i0;
       *j = j0 - 1;

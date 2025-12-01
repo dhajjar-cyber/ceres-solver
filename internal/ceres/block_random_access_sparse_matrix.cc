@@ -47,14 +47,14 @@ namespace ceres::internal {
 
 BlockRandomAccessSparseMatrix::BlockRandomAccessSparseMatrix(
     const std::vector<Block>& blocks,
-    const absl::btree_set<std::pair<int, int>>& block_pairs,
+    const absl::btree_set<std::pair<int64_t, int64_t>>& block_pairs,
     ContextImpl* context,
     int num_threads)
     : blocks_(blocks), context_(context), num_threads_(num_threads) {
-  CHECK_LE(blocks.size(), std::numeric_limits<std::int32_t>::max());
+  // CHECK_LE(blocks.size(), std::numeric_limits<std::int32_t>::max());
 
-  const int num_cols = NumScalarEntries(blocks);
-  const int num_blocks = blocks.size();
+  const int64_t num_cols = NumScalarEntries(blocks);
+  const int64_t num_blocks = blocks.size();
 
   std::vector<int> num_cells_at_row(num_blocks);
   for (auto& p : block_pairs) {
@@ -64,12 +64,12 @@ BlockRandomAccessSparseMatrix::BlockRandomAccessSparseMatrix(
   block_structure_->cols = blocks;
   block_structure_->rows.resize(num_blocks);
   auto p = block_pairs.begin();
-  int num_nonzeros = 0;
+  int64_t num_nonzeros = 0;
   // Pairs of block indices are sorted lexicographically, thus pairs
   // corresponding to a single row-block are stored in segments of index pairs
   // with constant row-block index and increasing column-block index.
   // CompressedRowBlockStructure is created by traversing block_pairs set.
-  for (int row_block_id = 0; row_block_id < num_blocks; ++row_block_id) {
+  for (int64_t row_block_id = 0; row_block_id < num_blocks; ++row_block_id) {
     auto& row = block_structure_->rows[row_block_id];
     row.block = blocks[row_block_id];
     row.cells.reserve(num_cells_at_row[row_block_id]);
@@ -78,7 +78,7 @@ BlockRandomAccessSparseMatrix::BlockRandomAccessSparseMatrix(
     // index pairs are sorted lexicographically, cells are being appended to the
     // current row-block till the first change in row-block index
     for (; p != block_pairs.end() && row_block_id == p->first; ++p) {
-      const int col_block_id = p->second;
+      const int64_t col_block_id = p->second;
       row.cells.emplace_back(col_block_id, num_nonzeros);
       num_nonzeros += row_block_size * blocks[col_block_id].size;
     }
@@ -87,28 +87,28 @@ BlockRandomAccessSparseMatrix::BlockRandomAccessSparseMatrix(
   VLOG(1) << "Matrix Size [" << num_cols << "," << num_cols << "] "
           << num_nonzeros;
   double* values = bsm_->mutable_values();
-  for (int row_block_id = 0; row_block_id < num_blocks; ++row_block_id) {
+  for (int64_t row_block_id = 0; row_block_id < num_blocks; ++row_block_id) {
     const auto& cells = block_structure_->rows[row_block_id].cells;
     for (auto& c : cells) {
-      const int col_block_id = c.block_id;
+      const int64_t col_block_id = c.block_id;
       double* const data = values + c.position;
-      layout_.emplace(IntPairToInt64(row_block_id, col_block_id), data);
+      layout_.emplace(std::make_pair(row_block_id, col_block_id), data);
     }
   }
 }
 
-CellInfo* BlockRandomAccessSparseMatrix::GetCell(int row_block_id,
-                                                 int col_block_id,
+CellInfo* BlockRandomAccessSparseMatrix::GetCell(int64_t row_block_id,
+                                                 int64_t col_block_id,
                                                  int* row,
                                                  int* col,
                                                  int* row_stride,
                                                  int* col_stride) {
-  const auto it = layout_.find(IntPairToInt64(row_block_id, col_block_id));
+  const auto it = layout_.find(std::make_pair(row_block_id, col_block_id));
   if (it == layout_.end()) {
     return nullptr;
   }
 
-  // Each cell is stored contiguously as its own little dense matrix.
+  // Each cell is stored contiguously as a row-major block.
   *row = 0;
   *col = 0;
   *row_stride = blocks_[row_block_id].size;

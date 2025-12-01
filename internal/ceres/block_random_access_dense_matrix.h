@@ -64,8 +64,8 @@ class CERES_NO_EXPORT BlockRandomAccessDenseMatrix
   ~BlockRandomAccessDenseMatrix() override = default;
 
   // BlockRandomAccessMatrix interface.
-  CellInfo* GetCell(int row_block_id,
-                    int col_block_id,
+  CellInfo* GetCell(int64_t row_block_id,
+                    int64_t col_block_id,
                     int* row,
                     int* col,
                     int* row_stride,
@@ -75,8 +75,8 @@ class CERES_NO_EXPORT BlockRandomAccessDenseMatrix
 
   // Since the matrix is square with the same row and column block
   // structure, num_rows() = num_cols().
-  int num_rows() const final { return num_rows_; }
-  int num_cols() const final { return num_rows_; }
+  int64_t num_rows() const final { return num_rows_; }
+  int64_t num_cols() const final { return num_rows_; }
 
   // The underlying matrix storing the cells.
   const double* values() const { return values_.get(); }
@@ -86,7 +86,7 @@ class CERES_NO_EXPORT BlockRandomAccessDenseMatrix
   std::vector<Block> blocks_;
   ContextImpl* context_ = nullptr;
   int num_threads_ = -1;
-  int num_rows_ = -1;
+  int64_t num_rows_ = -1;
   std::unique_ptr<double[]> values_;
   std::unique_ptr<CellInfo[]> cell_infos_;
 };

@@ -191,7 +191,7 @@ class ProgramEvaluator final : public Evaluator {
         0,
         num_residual_blocks,
         options_.num_threads,
-        [&](int thread_id, int i) {
+        [&](int thread_id, int64_t i) {
           if (abort) {
             return;
           }

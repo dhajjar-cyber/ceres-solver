@@ -184,9 +184,9 @@ void ImplicitSchurComplement::AddDiagonalAndInvert(
               0,
               block_diagonal_structure->rows.size(),
               options_.num_threads,
-              [block_diagonal_structure, D, block_diagonal](int row_block_id) {
+              [block_diagonal_structure, D, block_diagonal](int64_t row_block_id) {
                 auto& row = block_diagonal_structure->rows[row_block_id];
-                const int row_block_pos = row.block.position;
+                const int64_t row_block_pos = row.block.position;
                 const int row_block_size = row.block.size;
                 const Cell& cell = row.cells[0];
                 MatrixRef m(block_diagonal->mutable_values() + cell.position,
@@ -206,10 +206,10 @@ void ImplicitSchurComplement::AddDiagonalAndInvert(
 // Similar to RightMultiplyAndAccumulate, use the block structure of the matrix
 // A to compute y = (E'E)^-1 (E'b - E'F x).
 void ImplicitSchurComplement::BackSubstitute(const double* x, double* y) {
-  const int num_cols_e = A_->num_cols_e();
-  const int num_cols_f = A_->num_cols_f();
-  const int num_cols = A_->num_cols();
-  const int num_rows = A_->num_rows();
+  const int64_t num_cols_e = A_->num_cols_e();
+  const int64_t num_cols_f = A_->num_cols_f();
+  const int64_t num_cols = A_->num_cols();
+  const int64_t num_rows = A_->num_rows();
 
   // y1 = F x
   ParallelSetZero(options_.context, options_.num_threads, tmp_rows_);

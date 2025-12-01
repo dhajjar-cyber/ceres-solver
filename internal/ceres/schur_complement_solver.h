@@ -130,7 +130,7 @@ class CERES_NO_EXPORT SchurComplementSolver : public BlockSparseMatrixSolver {
   }
   const BlockRandomAccessMatrix* lhs() const { return lhs_.get(); }
   BlockRandomAccessMatrix* mutable_lhs() { return lhs_.get(); }
-  void ResizeRhs(int n) { rhs_.resize(n); }
+  void ResizeRhs(int64_t n) { rhs_.resize(n); }
   const Vector& rhs() const { return rhs_; }
 
  private:

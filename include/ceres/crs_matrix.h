@@ -75,8 +75,8 @@ struct CERES_EXPORT CRSMatrix {
   //  cols   = [ 1,  3,  1,  2,  3,  0,  1]
   //  values = [10,  4,  2, -3,  2,  1,  2]
 
-  std::vector<int> cols;
-  std::vector<int> rows;
+  std::vector<int64_t> cols;
+  std::vector<int64_t> rows;
   std::vector<double> values;
 };
 

@@ -377,7 +377,7 @@ class CERES_NO_EXPORT CudaSparseCholeskyImpl final : public SparseCholesky {
                                                            nullptr,
                                                            lhs_cols_d_.data(),
                                                            lhs_values_d_.data(),
-                                                           CUDA_R_32I,
+                                                           CUDA_R_64I,
                                                            kCuDSSScalar,
                                                            CUDSS_MTYPE_SPD,
                                                            CUDSS_MVIEW_LOWER,
@@ -445,8 +445,8 @@ class CERES_NO_EXPORT CudaSparseCholeskyImpl final : public SparseCholesky {
   CudaPinnedHostBuffer<Scalar> lhs_values_h_;
   CudaPinnedHostBuffer<Scalar> rhs_h_;
   CudaPinnedHostBuffer<Scalar> x_h_;
-  CudaBuffer<int> lhs_rows_d_;
-  CudaBuffer<int> lhs_cols_d_;
+  CudaBuffer<int64_t> lhs_rows_d_;
+  CudaBuffer<int64_t> lhs_cols_d_;
   CudaBuffer<Scalar> lhs_values_d_;
   CudaBuffer<Scalar> rhs_d_;
   CudaBuffer<Scalar> x_d_;

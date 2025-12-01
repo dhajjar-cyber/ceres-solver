@@ -53,14 +53,14 @@ BlockRandomAccessDiagonalMatrix::BlockRandomAccessDiagonalMatrix(
   m_ = CompressedRowSparseMatrix::CreateBlockDiagonalMatrix(nullptr, blocks);
   double* values = m_->mutable_values();
   layout_ = std::make_unique<CellInfo[]>(blocks.size());
-  for (int i = 0; i < blocks.size(); ++i) {
+  for (int64_t i = 0; i < blocks.size(); ++i) {
     layout_[i].values = values;
     values += blocks[i].size * blocks[i].size;
   }
 }
 
-CellInfo* BlockRandomAccessDiagonalMatrix::GetCell(int row_block_id,
-                                                   int col_block_id,
+CellInfo* BlockRandomAccessDiagonalMatrix::GetCell(int64_t row_block_id,
+                                                   int64_t col_block_id,
                                                    int* row,
                                                    int* col,
                                                    int* row_stride,
@@ -89,8 +89,8 @@ void BlockRandomAccessDiagonalMatrix::SetZero() {
 
 void BlockRandomAccessDiagonalMatrix::Invert() {
   auto& blocks = m_->row_blocks();
-  const int num_blocks = blocks.size();
-  ParallelFor(context_, 0, num_blocks, num_threads_, [this, blocks](int i) {
+  const int64_t num_blocks = blocks.size();
+  ParallelFor(context_, 0, num_blocks, num_threads_, [this, blocks](int64_t i) {
     auto& cell_info = layout_[i];
     auto& block = blocks[i];
     MatrixRef b(cell_info.values, block.size, block.size);

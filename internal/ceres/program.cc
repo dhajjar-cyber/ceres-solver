@@ -123,7 +123,7 @@ bool Program::Plus(const double* state,
       0,
       parameter_blocks_.size(),
       num_threads,
-      [&abort, state, delta, state_plus_delta, parameter_blocks](int block_id) {
+      [&abort, state, delta, state_plus_delta, parameter_blocks](int64_t block_id) {
         if (abort) {
           return;
         }

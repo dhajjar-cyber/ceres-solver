@@ -59,13 +59,15 @@ void InvokeWithThreadId(int thread_id, F&& function, Args&&... args) {
 // InvokeOnSegment either runs a loop over segment indices or passes it to the
 // function
 template <typename F>
-void InvokeOnSegment(int thread_id, std::tuple<int, int> range, F&& function) {
+void InvokeOnSegment(int thread_id,
+                     std::tuple<int64_t, int64_t> range,
+                     F&& function) {
   constexpr bool kExplicitLoop =
-      std::is_invocable_v<F, int> || std::is_invocable_v<F, int, int>;
+      std::is_invocable_v<F, int64_t> || std::is_invocable_v<F, int, int64_t>;
 
   if constexpr (kExplicitLoop) {
     const auto [start, end] = range;
-    for (int i = start; i != end; ++i) {
+    for (int64_t i = start; i != end; ++i) {
       InvokeWithThreadId(thread_id, std::forward<F>(function), i);
     }
   } else {
@@ -117,15 +119,15 @@ struct ParallelInvokeState {
   // Note that this splitting is optimal in the sense of maximal difference
   // between block sizes, since splitting into equal blocks is possible
   // if and only if number of indices is divisible by number of blocks.
-  ParallelInvokeState(int start, int end, int num_work_blocks);
+  ParallelInvokeState(int64_t start, int64_t end, int num_work_blocks);
 
   // The start and end index of the for loop.
-  const int start;
-  const int end;
+  const int64_t start;
+  const int64_t end;
   // The number of blocks that need to be processed.
   const int num_work_blocks;
   // Size of the smallest block
-  const int base_block_size;
+  const int64_t base_block_size;
   // Number of blocks of size base_block_size + 1
   const int num_base_p1_sized_blocks;
 
@@ -166,11 +168,11 @@ struct ParallelInvokeState {
 // and TBB.
 template <typename F>
 void ParallelInvoke(ContextImpl* context,
-                    int start,
-                    int end,
+                    int64_t start,
+                    int64_t end,
                     int num_threads,
                     F&& function,
-                    int min_block_size) {
+                    int64_t min_block_size) {
   CHECK(context != nullptr);
 
   // Maximal number of work items scheduled for a single thread
@@ -183,7 +185,7 @@ void ParallelInvoke(ContextImpl* context,
   //
   // In order to avoid creating empty blocks of work, we need to limit
   // number of work blocks by a total number of indices.
-  const int num_work_blocks = std::min((end - start) / min_block_size,
+  const int num_work_blocks = std::min(static_cast<int>((end - start) / min_block_size),
                                        num_threads * kWorkBlocksPerThread);
 
   // We use a std::shared_ptr because the main thread can finish all
@@ -218,8 +220,8 @@ void ParallelInvoke(ContextImpl* context,
       context->thread_pool.AddTask([task_copy]() { task_copy(task_copy); });
     }
 
-    const int start = shared_state->start;
-    const int base_block_size = shared_state->base_block_size;
+    const int64_t start = shared_state->start;
+    const int64_t base_block_size = shared_state->base_block_size;
     const int num_base_p1_sized_blocks = shared_state->num_base_p1_sized_blocks;
 
     while (true) {
@@ -246,13 +248,13 @@ void ParallelInvoke(ContextImpl* context,
       //
       // Simplifying sum of those quantities yields a following
       // expression for start index of the block #block_id
-      const int curr_start = start + block_id * base_block_size +
+      const int64_t curr_start = start + block_id * base_block_size +
                              std::min(block_id, num_base_p1_sized_blocks);
       // First num_base_p1_sized_blocks have size base_block_size + 1
       //
       // Note that it is guaranteed that all blocks are within
       // [start, end) interval
-      const int curr_end = curr_start + base_block_size +
+      const int64_t curr_end = curr_start + base_block_size +
                            (block_id < num_base_p1_sized_blocks ? 1 : 0);
       // Perform each task in current block
       const auto range = std::make_tuple(curr_start, curr_end);

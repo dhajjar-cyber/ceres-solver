@@ -52,7 +52,7 @@ void CompressedRowJacobianWriter::PopulateJacobianRowAndColumnBlockVectors(
   const auto& parameter_blocks = program->parameter_blocks();
   auto& col_blocks = *(jacobian->mutable_col_blocks());
   col_blocks.resize(parameter_blocks.size());
-  int col_pos = 0;
+  int64_t col_pos = 0;
   for (int i = 0; i < parameter_blocks.size(); ++i) {
     col_blocks[i].size = parameter_blocks[i]->TangentSize();
     col_blocks[i].position = col_pos;
@@ -62,7 +62,7 @@ void CompressedRowJacobianWriter::PopulateJacobianRowAndColumnBlockVectors(
   const auto& residual_blocks = program->residual_blocks();
   auto& row_blocks = *(jacobian->mutable_row_blocks());
   row_blocks.resize(residual_blocks.size());
-  int row_pos = 0;
+  int64_t row_pos = 0;
   for (int i = 0; i < residual_blocks.size(); ++i) {
     row_blocks[i].size = residual_blocks[i]->NumResiduals();
     row_blocks[i].position = row_pos;
@@ -99,7 +99,7 @@ std::unique_ptr<SparseMatrix> CompressedRowJacobianWriter::CreateJacobian()
   //
   // We used an unsigned int here, so that we can compare it INT_MAX without
   // triggering overflow behaviour.
-  unsigned int num_jacobian_nonzeros = total_num_effective_parameters;
+  int64_t num_jacobian_nonzeros = total_num_effective_parameters;
   for (auto* residual_block : residual_blocks) {
     const int num_residuals = residual_block->NumResiduals();
     const int num_parameter_blocks = residual_block->NumParameterBlocks();
@@ -107,12 +107,6 @@ std::unique_ptr<SparseMatrix> CompressedRowJacobianWriter::CreateJacobian()
       auto parameter_block = residual_block->parameter_blocks()[j];
       if (!parameter_block->IsConstant()) {
         num_jacobian_nonzeros += num_residuals * parameter_block->TangentSize();
-        if (num_jacobian_nonzeros > std::numeric_limits<int>::max()) {
-          LOG(ERROR) << "Unable to create Jacobian matrix: Too many entries in "
-                        "the Jacobian matrix. num_jacobian_nonzeros = "
-                     << num_jacobian_nonzeros;
-          return nullptr;
-        }
       }
     }
   }
@@ -124,15 +118,15 @@ std::unique_ptr<SparseMatrix> CompressedRowJacobianWriter::CreateJacobian()
   auto jacobian = std::make_unique<CompressedRowSparseMatrix>(
       total_num_residuals,
       total_num_effective_parameters,
-      static_cast<int>(num_jacobian_nonzeros));
+      num_jacobian_nonzeros);
 
   // At this stage, the CompressedRowSparseMatrix is an invalid state. But
   // this seems to be the only way to construct it without doing a memory
   // copy.
-  int* rows = jacobian->mutable_rows();
+  int64_t* rows = jacobian->mutable_rows();
   int* cols = jacobian->mutable_cols();
 
-  int row_pos = 0;
+  int64_t row_pos = 0;
   rows[0] = 0;
   for (auto* residual_block : residual_blocks) {
     const int num_parameter_blocks = residual_block->NumParameterBlocks();
@@ -183,7 +177,7 @@ std::unique_ptr<SparseMatrix> CompressedRowJacobianWriter::CreateJacobian()
       for (int r = 0; r < num_residuals; ++r) {
         // This is the position in the values array of the jacobian where this
         // row of the jacobian block should go.
-        const int column_block_begin = rows[row_pos + r] + col_pos;
+        const int64_t column_block_begin = rows[row_pos + r] + col_pos;
         for (int c = 0; c < parameter_block_size; ++c) {
           cols[column_block_begin + c] = parameter_block->delta_offset() + c;
         }
@@ -207,7 +201,7 @@ void CompressedRowJacobianWriter::Write(int residual_id,
   auto* jacobian = down_cast<CompressedRowSparseMatrix*>(base_jacobian);
 
   double* jacobian_values = jacobian->mutable_values();
-  const int* jacobian_rows = jacobian->rows();
+  const int64_t* jacobian_rows = jacobian->rows();
 
   auto residual_block = program_->residual_blocks()[residual_id];
   const int num_residuals = residual_block->NumResiduals();

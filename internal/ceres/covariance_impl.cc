@@ -321,14 +321,14 @@ bool CovarianceImpl::GetCovarianceMatrixInTangentOrAmbientSpace(
 
   // Technically the following code is a double nested loop where
   // i = 1:n, j = i:n.
-  int iteration_count = (num_parameters * (num_parameters + 1)) / 2;
+  int64_t iteration_count = (static_cast<int64_t>(num_parameters) * (num_parameters + 1)) / 2;
   problem_->context()->EnsureMinimumThreads(num_threads - 1);
   ParallelFor(problem_->context(),
               0,
               iteration_count,
               num_threads,
-              [&](int thread_id, int k) {
-                int i, j;
+              [&](int thread_id, int64_t k) {
+                int64_t i, j;
                 LinearIndexToUpperTriangularIndex(k, num_parameters, &i, &j);
 
                 int covariance_row_idx = cum_parameter_size[i];

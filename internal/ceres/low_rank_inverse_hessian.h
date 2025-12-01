@@ -70,7 +70,7 @@ class CERES_NO_EXPORT LowRankInverseHessian final : public LinearOperator {
   // The approximation uses:
   // 2 * max_num_corrections * num_parameters + max_num_corrections
   // doubles.
-  LowRankInverseHessian(int num_parameters,
+  LowRankInverseHessian(int64_t num_parameters,
                         int max_num_corrections,
                         bool use_approximate_eigenvalue_scaling);
 
@@ -87,11 +87,11 @@ class CERES_NO_EXPORT LowRankInverseHessian final : public LinearOperator {
   void LeftMultiplyAndAccumulate(const double* x, double* y) const final {
     RightMultiplyAndAccumulate(x, y);
   }
-  int num_rows() const final { return num_parameters_; }
-  int num_cols() const final { return num_parameters_; }
+  int64_t num_rows() const final { return num_parameters_; }
+  int64_t num_cols() const final { return num_parameters_; }
 
  private:
-  const int num_parameters_;
+  const int64_t num_parameters_;
   const int max_num_corrections_;
   const bool use_approximate_eigenvalue_scaling_;
   double approximate_eigenvalue_scale_;

@@ -153,13 +153,13 @@ class CERES_NO_EXPORT Preconditioner : public LinearOperator {
     return RightMultiplyAndAccumulate(x, y);
   }
 
-  int num_rows() const override = 0;
-  int num_cols() const override { return num_rows(); }
+  int64_t num_rows() const override = 0;
+  int64_t num_cols() const override { return num_rows(); }
 };
 
 class CERES_NO_EXPORT IdentityPreconditioner : public Preconditioner {
  public:
-  IdentityPreconditioner(int num_rows) : num_rows_(num_rows) {}
+  IdentityPreconditioner(int64_t num_rows) : num_rows_(num_rows) {}
 
   bool Update(const LinearOperator& /*A*/, const double* /*D*/) final {
     return true;
@@ -169,10 +169,10 @@ class CERES_NO_EXPORT IdentityPreconditioner : public Preconditioner {
     VectorRef(y, num_rows_) += ConstVectorRef(x, num_rows_);
   }
 
-  int num_rows() const final { return num_rows_; }
+  int64_t num_rows() const final { return num_rows_; }
 
  private:
-  int num_rows_ = -1;
+  int64_t num_rows_ = -1;
 };
 
 // This templated subclass of Preconditioner serves as a base class for

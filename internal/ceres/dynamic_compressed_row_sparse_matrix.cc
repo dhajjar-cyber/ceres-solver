@@ -37,14 +37,14 @@
 namespace ceres::internal {
 
 DynamicCompressedRowSparseMatrix::DynamicCompressedRowSparseMatrix(
-    int num_rows, int num_cols, int initial_max_num_nonzeros)
+    int64_t num_rows, int64_t num_cols, int64_t initial_max_num_nonzeros)
     : CompressedRowSparseMatrix(num_rows, num_cols, initial_max_num_nonzeros) {
   dynamic_cols_.resize(num_rows);
   dynamic_values_.resize(num_rows);
 }
 
-void DynamicCompressedRowSparseMatrix::InsertEntry(int row,
-                                                   int col,
+void DynamicCompressedRowSparseMatrix::InsertEntry(int64_t row,
+                                                   int64_t col,
                                                    const double& value) {
   CHECK_GE(row, 0);
   CHECK_LT(row, num_rows());
@@ -54,9 +54,10 @@ void DynamicCompressedRowSparseMatrix::InsertEntry(int row,
   dynamic_values_[row].push_back(value);
 }
 
-void DynamicCompressedRowSparseMatrix::ClearRows(int row_start, int num_rows) {
-  for (int r = 0; r < num_rows; ++r) {
-    const int i = row_start + r;
+void DynamicCompressedRowSparseMatrix::ClearRows(int64_t row_start,
+                                                 int64_t num_rows) {
+  for (int64_t r = 0; r < num_rows; ++r) {
+    const int64_t i = row_start + r;
     CHECK_GE(i, 0);
     CHECK_LT(i, this->num_rows());
     dynamic_cols_[i].resize(0);
@@ -64,13 +65,13 @@ void DynamicCompressedRowSparseMatrix::ClearRows(int row_start, int num_rows) {
   }
 }
 
-void DynamicCompressedRowSparseMatrix::Finalize(int num_additional_elements) {
+void DynamicCompressedRowSparseMatrix::Finalize(int64_t num_additional_elements) {
   // `num_additional_elements` is provided as an argument so that additional
   // storage can be reserved when it is known by the finalizer.
   CHECK_GE(num_additional_elements, 0);
 
   // Count the number of non-zeros and resize `cols_` and `values_`.
-  int num_jacobian_nonzeros = 0;
+  int64_t num_jacobian_nonzeros = 0;
   for (const auto& dynamic_col : dynamic_cols_) {
     num_jacobian_nonzeros += dynamic_col.size();
   }
@@ -79,10 +80,10 @@ void DynamicCompressedRowSparseMatrix::Finalize(int num_additional_elements) {
 
   // Flatten `dynamic_cols_` into `cols_` and `dynamic_values_`
   // into `values_`.
-  int index_into_values_and_cols = 0;
-  for (int i = 0; i < num_rows(); ++i) {
+  int64_t index_into_values_and_cols = 0;
+  for (int64_t i = 0; i < num_rows(); ++i) {
     mutable_rows()[i] = index_into_values_and_cols;
-    const int num_nonzero_columns = dynamic_cols_[i].size();
+    const int64_t num_nonzero_columns = dynamic_cols_[i].size();
     if (num_nonzero_columns > 0) {
       memcpy(mutable_cols() + index_into_values_and_cols,
              &dynamic_cols_[i][0],

@@ -61,7 +61,7 @@ void ComputeCumulativeNumberOfNonZeros(std::vector<CompressedList>& rows) {
   }
   rows[0].cumulative_nnz = rows[0].nnz;
   for (int c = 1; c < rows.size(); ++c) {
-    const int curr_nnz = rows[c].nnz;
+    const int64_t curr_nnz = rows[c].nnz;
     rows[c].cumulative_nnz = curr_nnz + rows[c - 1].cumulative_nnz;
   }
 }
@@ -71,13 +71,13 @@ std::unique_ptr<CompressedRowSparseMatrix>
 CreateStructureOfCompressedRowSparseMatrix(
     int num_rows,
     int num_cols,
-    int num_nonzeros,
+    int64_t num_nonzeros,
     const CompressedRowBlockStructure* block_structure) {
   auto crs_matrix = std::make_unique<CompressedRowSparseMatrix>(
       num_rows, num_cols, num_nonzeros);
   auto crs_cols = crs_matrix->mutable_cols();
   auto crs_rows = crs_matrix->mutable_rows();
-  int value_offset = 0;
+  int64_t value_offset = 0;
   const int num_row_blocks = block_structure->rows.size();
   const auto& cols = block_structure->cols;
   *crs_rows++ = 0;
@@ -90,7 +90,7 @@ CreateStructureOfCompressedRowSparseMatrix(
       continue;
     }
 
-    int row_nnz = 0;
+    int64_t row_nnz = 0;
     if constexpr (transpose) {
       // Transposed block structure comes with nnz in row-block filled-in
       row_nnz = row_block.nnz / row_block.block.size;
@@ -251,8 +251,8 @@ void BlockSparseMatrix::RightMultiplyAndAccumulate(const double* x,
               0,
               num_row_blocks,
               num_threads,
-              [values, block_structure, x, y](int row_block_id) {
-                const int row_block_pos =
+              [values, block_structure, x, y](int64_t row_block_id) {
+                const int64_t row_block_pos =
                     block_structure->rows[row_block_id].block.position;
                 const int row_block_size =
                     block_structure->rows[row_block_id].block.size;
@@ -261,7 +261,7 @@ void BlockSparseMatrix::RightMultiplyAndAccumulate(const double* x,
                   const int col_block_id = cell.block_id;
                   const int col_block_size =
                       block_structure->cols[col_block_id].size;
-                  const int col_block_pos =
+                  const int64_t col_block_pos =
                       block_structure->cols[col_block_id].position;
                   MatrixVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
                       values + cell.position,
@@ -303,15 +303,15 @@ void BlockSparseMatrix::LeftMultiplyAndAccumulate(const double* x,
       0,
       num_col_blocks,
       num_threads,
-      [values, transpose_bs, x, y](int row_block_id) {
-        int row_block_pos = transpose_bs->rows[row_block_id].block.position;
+      [values, transpose_bs, x, y](int64_t row_block_id) {
+        int64_t row_block_pos = transpose_bs->rows[row_block_id].block.position;
         int row_block_size = transpose_bs->rows[row_block_id].block.size;
         auto& cells = transpose_bs->rows[row_block_id].cells;
 
         for (auto& cell : cells) {
           const int col_block_id = cell.block_id;
           const int col_block_size = transpose_bs->cols[col_block_id].size;
-          const int col_block_pos = transpose_bs->cols[col_block_id].position;
+          const int64_t col_block_pos = transpose_bs->cols[col_block_id].position;
           MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
               values + cell.position,
               col_block_size,
@@ -330,14 +330,14 @@ void BlockSparseMatrix::LeftMultiplyAndAccumulate(const double* x,
   CHECK(y != nullptr);
   // Single-threaded left products are always computed using a non-transpose
   // block structure, because it has linear access pattern to matrix elements
-  for (int i = 0; i < block_structure_->rows.size(); ++i) {
-    int row_block_pos = block_structure_->rows[i].block.position;
+  for (int64_t i = 0; i < block_structure_->rows.size(); ++i) {
+    int64_t row_block_pos = block_structure_->rows[i].block.position;
     int row_block_size = block_structure_->rows[i].block.size;
     const auto& cells = block_structure_->rows[i].cells;
     for (const auto& cell : cells) {
       int col_block_id = cell.block_id;
       int col_block_size = block_structure_->cols[col_block_id].size;
-      int col_block_pos = block_structure_->cols[col_block_id].position;
+      int64_t col_block_pos = block_structure_->cols[col_block_id].position;
       MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
           values_ + cell.position,
           row_block_size,
@@ -351,13 +351,13 @@ void BlockSparseMatrix::LeftMultiplyAndAccumulate(const double* x,
 void BlockSparseMatrix::SquaredColumnNorm(double* x) const {
   CHECK(x != nullptr);
   VectorRef(x, num_cols_).setZero();
-  for (int i = 0; i < block_structure_->rows.size(); ++i) {
+  for (int64_t i = 0; i < block_structure_->rows.size(); ++i) {
     int row_block_size = block_structure_->rows[i].block.size;
     auto& cells = block_structure_->rows[i].cells;
     for (const auto& cell : cells) {
       int col_block_id = cell.block_id;
       int col_block_size = block_structure_->cols[col_block_id].size;
-      int col_block_pos = block_structure_->cols[col_block_id].position;
+      int64_t col_block_pos = block_structure_->cols[col_block_id].position;
       const MatrixRef m(
           values_ + cell.position, row_block_size, col_block_size);
       VectorRef(x + col_block_pos, col_block_size) += m.colwise().squaredNorm();
@@ -386,7 +386,7 @@ void BlockSparseMatrix::SquaredColumnNorm(double* x,
       0,
       num_col_blocks,
       num_threads,
-      [values, transpose_bs, x](int row_block_id) {
+      [values, transpose_bs, x](int64_t row_block_id) {
         const auto& row = transpose_bs->rows[row_block_id];
 
         for (auto& cell : row.cells) {
@@ -435,7 +435,7 @@ void BlockSparseMatrix::ScaleColumns(const double* scale,
       0,
       num_col_blocks,
       num_threads,
-      [values, transpose_bs, scale](int row_block_id) {
+      [values, transpose_bs, scale](int64_t row_block_id) {
         const auto& row = transpose_bs->rows[row_block_id];
 
         for (auto& cell : row.cells) {
@@ -807,7 +807,7 @@ std::unique_ptr<CompressedRowBlockStructure> CreateTranspose(
   return transpose;
 }
 
-double* BlockSparseMatrix::AllocateValues(int size) {
+double* BlockSparseMatrix::AllocateValues(int64_t size) {
   if (!use_page_locked_memory_) {
     return new double[size];
   }

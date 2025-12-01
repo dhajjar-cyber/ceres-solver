@@ -38,13 +38,13 @@ namespace ceres::internal {
 void ParallelSetZero(ContextImpl* context,
                      int num_threads,
                      double* values,
-                     int num_values) {
+                     int64_t num_values) {
   ParallelFor(
       context,
       0,
       num_values,
       num_threads,
-      [values](std::tuple<int, int> range) {
+      [values](std::tuple<int64_t, int64_t> range) {
         auto [start, end] = range;
         std::fill(values + start, values + end, 0.);
       },

@@ -37,18 +37,18 @@
 namespace ceres::internal {
 
 void DetectStructure(const CompressedRowBlockStructure& bs,
-                     const int num_eliminate_blocks,
+                     const int64_t num_eliminate_blocks,
                      int* row_block_size,
                      int* e_block_size,
                      int* f_block_size) {
-  const int num_row_blocks = bs.rows.size();
+  const int64_t num_row_blocks = bs.rows.size();
   *row_block_size = 0;
   *e_block_size = 0;
   *f_block_size = 0;
 
   // Iterate over row blocks of the matrix, checking if row_block,
   // e_block or f_block sizes remain constant.
-  for (int r = 0; r < num_row_blocks; ++r) {
+  for (int64_t r = 0; r < num_row_blocks; ++r) {
     const CompressedRow& row = bs.rows[r];
     // We do not care about the sizes of the blocks in rows which do
     // not contain e_blocks.

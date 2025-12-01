@@ -66,7 +66,7 @@ bool BlockSparseJacobiPreconditioner::UpdateImpl(const BlockSparseMatrix& A,
               0,
               bs->rows.size(),
               options_.num_threads,
-              [this, bs, values](int i) {
+              [this, bs, values](int64_t i) {
                 const int row_block_size = bs->rows[i].block.size;
                 const std::vector<Cell>& cells = bs->rows[i].cells;
                 for (const auto& cell : cells) {
@@ -96,7 +96,7 @@ bool BlockSparseJacobiPreconditioner::UpdateImpl(const BlockSparseMatrix& A,
                 0,
                 bs->cols.size(),
                 options_.num_threads,
-                [this, bs, D](int i) {
+                [this, bs, D](int64_t i) {
                   const int block_size = bs->cols[i].size;
                   int r, c, row_stride, col_stride;
                   CellInfo* cell_info =
@@ -176,7 +176,7 @@ bool BlockCRSJacobiPreconditioner::UpdateImpl(
       0,
       num_row_blocks,
       options_.num_threads,
-      [this, row_blocks, a_rows, a_cols, a_values, m_values, m_rows](int i) {
+      [this, row_blocks, a_rows, a_cols, a_values, m_values, m_rows](int64_t i) {
         const int row = row_blocks[i].position;
         const int row_block_size = row_blocks[i].size;
         const int row_nnz = a_rows[row + 1] - a_rows[row];
@@ -206,7 +206,7 @@ bool BlockCRSJacobiPreconditioner::UpdateImpl(
       0,
       num_col_blocks,
       options_.num_threads,
-      [col_blocks, m_rows, m_values, D](int i) {
+      [col_blocks, m_rows, m_values, D](int64_t i) {
         const int col = col_blocks[i].position;
         const int col_block_size = col_blocks[i].size;
         MatrixRef m(m_values + m_rows[col], col_block_size, col_block_size);

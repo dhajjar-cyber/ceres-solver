@@ -201,7 +201,7 @@ class CERES_NO_EXPORT LinearSolver {
     // elimination group must form an independent set in the normal
     // equations. The first elimination group corresponds to the
     // num_eliminate_blocks in the Schur type solvers.
-    std::vector<int> elimination_groups;
+    std::vector<int64_t> elimination_groups;
 
     // Iterative solvers, e.g. Preconditioned Conjugate Gradients
     // maintain a cheap estimate of the residual which may become

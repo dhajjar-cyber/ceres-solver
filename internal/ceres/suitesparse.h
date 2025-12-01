@@ -96,13 +96,13 @@ class CERES_NO_EXPORT SuiteSparse {
   // for symmetric scaling which scales both the rows and the columns
   // - diag(scale) * A * diag(scale).
   void Scale(cholmod_dense* scale, int mode, cholmod_sparse* A) {
-    cholmod_scale(scale, mode, A, &cc_);
+    cholmod_l_scale(scale, mode, A, &cc_);
   }
 
   // Create and return a matrix m = A * A'. Caller owns the
   // result. The matrix A is not modified.
   cholmod_sparse* AATranspose(cholmod_sparse* A) {
-    cholmod_sparse* m = cholmod_aat(A, nullptr, A->nrow, 1, &cc_);
+    cholmod_sparse* m = cholmod_l_aat(A, nullptr, A->nrow, 1, &cc_);
     m->stype = 1;  // Pay attention to the upper triangular part.
     return m;
   }
@@ -115,7 +115,7 @@ class CERES_NO_EXPORT SuiteSparse {
                            cholmod_dense* y) {
     double alpha_[2] = {alpha, 0};
     double beta_[2] = {beta, 0};
-    cholmod_sdmult(A, 0, alpha_, beta_, x, y, &cc_);
+    cholmod_l_sdmult(A, 0, alpha_, beta_, x, y, &cc_);
   }
 
   // Compute a symbolic factorization for A or AA' (if A is
@@ -154,7 +154,7 @@ class CERES_NO_EXPORT SuiteSparse {
   // Caller owns the result.
   cholmod_factor* AnalyzeCholeskyWithGivenOrdering(
       cholmod_sparse* A,
-      const std::vector<int>& ordering,
+      const std::vector<int64_t>& ordering,
       std::string* message);
 
   // Use the symbolic factorization in L, to find the numerical
@@ -180,7 +180,7 @@ class CERES_NO_EXPORT SuiteSparse {
   // enough to hold the ordering. ordering_type must be AMD or NESDIS.
   bool Ordering(cholmod_sparse* matrix,
                 OrderingType ordering_type,
-                int* ordering);
+                int64_t* ordering);
 
   // Find the block oriented fill reducing ordering of a matrix A,
   // whose row and column blocks are given by row_blocks, and
@@ -204,7 +204,7 @@ class CERES_NO_EXPORT SuiteSparse {
                      OrderingType ordering_type,
                      const std::vector<Block>& row_blocks,
                      const std::vector<Block>& col_blocks,
-                     std::vector<int>* ordering);
+                     std::vector<int64_t>* ordering);
 
   // Nested dissection is only available if SuiteSparse is compiled
   // with Metis support.
@@ -221,23 +221,23 @@ class CERES_NO_EXPORT SuiteSparse {
   // ConstrainedApproximateMinimumDegreeOrdering with a constraint
   // array that puts all columns in the same elimination group.
   bool ConstrainedApproximateMinimumDegreeOrdering(cholmod_sparse* matrix,
-                                                   int* constraints,
-                                                   int* ordering);
+                                                   int64_t* constraints,
+                                                   int64_t* ordering);
 
-  void Free(cholmod_sparse* m) { cholmod_free_sparse(&m, &cc_); }
-  void Free(cholmod_dense* m) { cholmod_free_dense(&m, &cc_); }
-  void Free(cholmod_factor* m) { cholmod_free_factor(&m, &cc_); }
+  void Free(cholmod_sparse* m) { cholmod_l_free_sparse(&m, &cc_); }
+  void Free(cholmod_dense* m) { cholmod_l_free_dense(&m, &cc_); }
+  void Free(cholmod_factor* m) { cholmod_l_free_factor(&m, &cc_); }
 
   void Print(cholmod_sparse* m, const std::string& name) {
-    cholmod_print_sparse(m, const_cast<char*>(name.c_str()), &cc_);
+    cholmod_l_print_sparse(m, const_cast<char*>(name.c_str()), &cc_);
   }
 
   void Print(cholmod_dense* m, const std::string& name) {
-    cholmod_print_dense(m, const_cast<char*>(name.c_str()), &cc_);
+    cholmod_l_print_dense(m, const_cast<char*>(name.c_str()), &cc_);
   }
 
   void Print(cholmod_triplet* m, const std::string& name) {
-    cholmod_print_triplet(m, const_cast<char*>(name.c_str()), &cc_);
+    cholmod_l_print_triplet(m, const_cast<char*>(name.c_str()), &cc_);
   }
 
   cholmod_common* mutable_cc() { return &cc_; }

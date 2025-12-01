@@ -78,7 +78,7 @@ SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::~SchurEliminator() {
 
 template <int kRowBlockSize, int kEBlockSize, int kFBlockSize>
 void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Init(
-    int num_eliminate_blocks,
+    int64_t num_eliminate_blocks,
     bool assume_full_rank_ete,
     const CompressedRowBlockStructure* bs) {
   CHECK_GT(num_eliminate_blocks, 0)
@@ -88,19 +88,19 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Init(
   num_eliminate_blocks_ = num_eliminate_blocks;
   assume_full_rank_ete_ = assume_full_rank_ete;
 
-  const int num_col_blocks = bs->cols.size();
-  const int num_row_blocks = bs->rows.size();
+  const int64_t num_col_blocks = bs->cols.size();
+  const int64_t num_row_blocks = bs->rows.size();
 
   buffer_size_ = 1;
   chunks_.clear();
   lhs_row_layout_.clear();
 
-  int lhs_num_rows = 0;
+  int64_t lhs_num_rows = 0;
   // Add a map object for each block in the reduced linear system
   // and build the row/column block structure of the reduced linear
   // system.
   lhs_row_layout_.resize(num_col_blocks - num_eliminate_blocks_);
-  for (int i = num_eliminate_blocks_; i < num_col_blocks; ++i) {
+  for (int64_t i = num_eliminate_blocks_; i < num_col_blocks; ++i) {
     lhs_row_layout_[i - num_eliminate_blocks_] = lhs_num_rows;
     lhs_num_rows += bs->cols[i].size;
   }
@@ -112,21 +112,21 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Init(
   // This likely requires a slightly different algorithm, which works
   // off of the number of elimination blocks.
 
-  int r = 0;
+  int64_t r = 0;
   // Iterate over the row blocks of A, and detect the chunks. The
   // matrix should already have been ordered so that all rows
   // containing the same y block are vertically contiguous. Along
   // the way also compute the amount of space each chunk will need
   // to perform the elimination.
   while (r < num_row_blocks) {
-    const int chunk_block_id = bs->rows[r].cells.front().block_id;
+    const int64_t chunk_block_id = bs->rows[r].cells.front().block_id;
     if (chunk_block_id >= num_eliminate_blocks_) {
       break;
     }
 
     chunks_.push_back(Chunk(r));
     Chunk& chunk = chunks_.back();
-    int buffer_size = 0;
+    int64_t buffer_size = 0;
     const int e_block_size = bs->cols[chunk_block_id].size;
 
     // Add to the chunk until the first block in the row is
@@ -188,7 +188,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Eliminate(
   }
 
   const CompressedRowBlockStructure* bs = A.block_structure();
-  const int num_col_blocks = bs->cols.size();
+  const int64_t num_col_blocks = bs->cols.size();
 
   // Add the diagonal to the schur complement.
   if (D != nullptr) {
@@ -196,8 +196,8 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Eliminate(
                 num_eliminate_blocks_,
                 num_col_blocks,
                 num_threads_,
-                [&](int i) {
-                  const int block_id = i - num_eliminate_blocks_;
+                [&](int64_t i) {
+                  const int64_t block_id = i - num_eliminate_blocks_;
                   int r, c, row_stride, col_stride;
                   CellInfo* cell_info = lhs->GetCell(
                       block_id, block_id, &r, &c, &row_stride, &col_stride);
@@ -228,12 +228,12 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::Eliminate(
   ParallelFor(
       context_,
       0,
-      int(chunks_.size()),
+      chunks_.size(),
       num_threads_,
-      [&](int thread_id, int i) {
+      [&](int thread_id, int64_t i) {
         double* buffer = buffer_.get() + thread_id * buffer_size_;
         const Chunk& chunk = chunks_[i];
-        const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+        const int64_t e_block_id = bs->rows[chunk.start].cells.front().block_id;
         const int e_block_size = bs->cols[e_block_id].size;
 
         VectorRef(buffer, buffer_size_).setZero();
@@ -313,9 +313,9 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::BackSubstitute(
   const CompressedRowBlockStructure* bs = A.block_structure();
   const double* values = A.values();
 
-  ParallelFor(context_, 0, int(chunks_.size()), num_threads_, [&](int i) {
+  ParallelFor(context_, 0, chunks_.size(), num_threads_, [&](int64_t i) {
     const Chunk& chunk = chunks_[i];
-    const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+    const int64_t e_block_id = bs->rows[chunk.start].cells.front().block_id;
     const int e_block_size = bs->cols[e_block_id].size;
 
     double* y_ptr = y + bs->cols[e_block_id].position;
@@ -343,9 +343,9 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::BackSubstitute(
               b + bs->rows[chunk.start + j].block.position, row.block.size);
 
       for (int c = 1; c < row.cells.size(); ++c) {
-        const int f_block_id = row.cells[c].block_id;
+        const int64_t f_block_id = row.cells[c].block_id;
         const int f_block_size = bs->cols[f_block_id].size;
-        const int r_block = f_block_id - num_eliminate_blocks_;
+        const int64_t r_block = f_block_id - num_eliminate_blocks_;
 
         // clang-format off
         MatrixVectorMultiply<kRowBlockSize, kFBlockSize, -1>(
@@ -380,15 +380,15 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::UpdateRhs(
     const Chunk& chunk,
     const BlockSparseMatrixData& A,
     const double* b,
-    int row_block_counter,
+    int64_t row_block_counter,
     const double* inverse_ete_g,
     double* rhs) {
   const CompressedRowBlockStructure* bs = A.block_structure();
   const double* values = A.values();
 
-  const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+  const int64_t e_block_id = bs->rows[chunk.start].cells.front().block_id;
   const int e_block_size = bs->cols[e_block_id].size;
-  int b_pos = bs->rows[row_block_counter].block.position;
+  int64_t b_pos = bs->rows[row_block_counter].block.position;
   for (int j = 0; j < chunk.size; ++j) {
     const CompressedRow& row = bs->rows[row_block_counter + j];
     const Cell& e_cell = row.cells.front();
@@ -404,9 +404,9 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::UpdateRhs(
     // clang-format on
 
     for (int c = 1; c < row.cells.size(); ++c) {
-      const int block_id = row.cells[c].block_id;
+      const int64_t block_id = row.cells[c].block_id;
       const int block_size = bs->cols[block_id].size;
-      const int block = block_id - num_eliminate_blocks_;
+      const int64_t block = block_id - num_eliminate_blocks_;
       auto lock = MakeConditionalLock(num_threads_, *rhs_locks_[block]);
       // clang-format off
       MatrixTransposeVectorMultiply<kRowBlockSize, kFBlockSize, 1>(
@@ -444,7 +444,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
         const Chunk& chunk,
         const BlockSparseMatrixData& A,
         const double* b,
-        int row_block_counter,
+        int64_t row_block_counter,
         typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix* ete,
         double* g,
         double* buffer,
@@ -452,7 +452,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
   const CompressedRowBlockStructure* bs = A.block_structure();
   const double* values = A.values();
 
-  int b_pos = bs->rows[row_block_counter].block.position;
+  int64_t b_pos = bs->rows[row_block_counter].block.position;
   const int e_block_size = ete->rows();
 
   // Iterate over the rows in this chunk, for each row, compute the
@@ -489,7 +489,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     // buffer = E'F. This computation is done by iterating over the
     // f_blocks for each row in the chunk.
     for (int c = 1; c < row.cells.size(); ++c) {
-      const int f_block_id = row.cells[c].block_id;
+      const int64_t f_block_id = row.cells[c].block_id;
       const int f_block_size = bs->cols[f_block_id].size;
       double* buffer_ptr = buffer + FindOrDie(chunk.buffer_layout, f_block_id);
       // clang-format off
@@ -528,7 +528,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
 
   // S(i,j) -= bi' * ete^{-1} b_j
   for (; it1 != buffer_layout.end(); ++it1) {
-    const int block1 = it1->first - num_eliminate_blocks_;
+    const int64_t block1 = it1->first - num_eliminate_blocks_;
     const int block1_size = bs->cols[it1->first].size;
     // clang-format off
     MatrixTransposeMatrixMultiply
@@ -540,7 +540,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
 
     auto it2 = it1;
     for (; it2 != buffer_layout.end(); ++it2) {
-      const int block2 = it2->first - num_eliminate_blocks_;
+      const int64_t block2 = it2->first - num_eliminate_blocks_;
 
       int r, c, row_stride, col_stride;
       CellInfo* cell_info =
@@ -567,7 +567,7 @@ template <int kRowBlockSize, int kEBlockSize, int kFBlockSize>
 void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     NoEBlockRowsUpdate(const BlockSparseMatrixData& A,
                        const double* b,
-                       int row_block_counter,
+                       int64_t row_block_counter,
                        BlockRandomAccessMatrix* lhs,
                        double* rhs) {
   const CompressedRowBlockStructure* bs = A.block_structure();
@@ -579,9 +579,9 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     }
     const CompressedRow& row = bs->rows[row_block_counter];
     for (int c = 0; c < row.cells.size(); ++c) {
-      const int block_id = row.cells[c].block_id;
+      const int64_t block_id = row.cells[c].block_id;
       const int block_size = bs->cols[block_id].size;
-      const int block = block_id - num_eliminate_blocks_;
+      const int64_t block = block_id - num_eliminate_blocks_;
       // clang-format off
       MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
           values + row.cells[c].position, row.block.size, block_size,
@@ -609,14 +609,14 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
 template <int kRowBlockSize, int kEBlockSize, int kFBlockSize>
 void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     NoEBlockRowOuterProduct(const BlockSparseMatrixData& A,
-                            int row_block_index,
+                            int64_t row_block_index,
                             BlockRandomAccessMatrix* lhs) {
   const CompressedRowBlockStructure* bs = A.block_structure();
   const double* values = A.values();
 
   const CompressedRow& row = bs->rows[row_block_index];
   for (int i = 0; i < row.cells.size(); ++i) {
-    const int block1 = row.cells[i].block_id - num_eliminate_blocks_;
+    const int64_t block1 = row.cells[i].block_id - num_eliminate_blocks_;
     DCHECK_GE(block1, 0);
 
     const int block1_size = bs->cols[row.cells[i].block_id].size;
@@ -637,7 +637,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     }
 
     for (int j = i + 1; j < row.cells.size(); ++j) {
-      const int block2 = row.cells[j].block_id - num_eliminate_blocks_;
+      const int64_t block2 = row.cells[j].block_id - num_eliminate_blocks_;
       DCHECK_GE(block2, 0);
       DCHECK_LT(block1, block2);
       int r, c, row_stride, col_stride;
@@ -664,14 +664,14 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
 template <int kRowBlockSize, int kEBlockSize, int kFBlockSize>
 void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     EBlockRowOuterProduct(const BlockSparseMatrixData& A,
-                          int row_block_index,
+                          int64_t row_block_index,
                           BlockRandomAccessMatrix* lhs) {
   const CompressedRowBlockStructure* bs = A.block_structure();
   const double* values = A.values();
 
   const CompressedRow& row = bs->rows[row_block_index];
   for (int i = 1; i < row.cells.size(); ++i) {
-    const int block1 = row.cells[i].block_id - num_eliminate_blocks_;
+    const int64_t block1 = row.cells[i].block_id - num_eliminate_blocks_;
     DCHECK_GE(block1, 0);
 
     const int block1_size = bs->cols[row.cells[i].block_id].size;
@@ -691,7 +691,7 @@ void SchurEliminator<kRowBlockSize, kEBlockSize, kFBlockSize>::
     }
 
     for (int j = i + 1; j < row.cells.size(); ++j) {
-      const int block2 = row.cells[j].block_id - num_eliminate_blocks_;
+      const int64_t block2 = row.cells[j].block_id - num_eliminate_blocks_;
       DCHECK_GE(block2, 0);
       DCHECK_LT(block1, block2);
       const int block2_size = bs->cols[row.cells[j].block_id].size;

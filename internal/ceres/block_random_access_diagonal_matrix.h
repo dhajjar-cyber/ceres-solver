@@ -57,8 +57,8 @@ class CERES_NO_EXPORT BlockRandomAccessDiagonalMatrix
   ~BlockRandomAccessDiagonalMatrix() override = default;
 
   // BlockRandomAccessMatrix Interface.
-  CellInfo* GetCell(int row_block_id,
-                    int col_block_id,
+  CellInfo* GetCell(int64_t row_block_id,
+                    int64_t col_block_id,
                     int* row,
                     int* col,
                     int* row_stride,
@@ -74,8 +74,8 @@ class CERES_NO_EXPORT BlockRandomAccessDiagonalMatrix
   void RightMultiplyAndAccumulate(const double* x, double* y) const;
 
   // Since the matrix is square, num_rows() == num_cols().
-  int num_rows() const final { return m_->num_rows(); }
-  int num_cols() const final { return m_->num_cols(); }
+  int64_t num_rows() const final { return m_->num_rows(); }
+  int64_t num_cols() const final { return m_->num_cols(); }
 
   const CompressedRowSparseMatrix* matrix() const { return m_.get(); }
   CompressedRowSparseMatrix* mutable_matrix() { return m_.get(); }

@@ -41,17 +41,17 @@
 
 namespace ceres::internal {
 
-DenseSparseMatrix::DenseSparseMatrix(int num_rows, int num_cols)
+DenseSparseMatrix::DenseSparseMatrix(int64_t num_rows, int64_t num_cols)
     : m_(Matrix(num_rows, num_cols)) {}
 
 DenseSparseMatrix::DenseSparseMatrix(const TripletSparseMatrix& m)
     : m_(Matrix::Zero(m.num_rows(), m.num_cols())) {
   const double* values = m.values();
-  const int* rows = m.rows();
-  const int* cols = m.cols();
-  int num_nonzeros = m.num_nonzeros();
+  const int64_t* rows = m.rows();
+  const int64_t* cols = m.cols();
+  int64_t num_nonzeros = m.num_nonzeros();
 
-  for (int i = 0; i < num_nonzeros; ++i) {
+  for (int64_t i = 0; i < num_nonzeros; ++i) {
     m_(rows[i], cols[i]) += values[i];
   }
 }
@@ -76,12 +76,12 @@ void DenseSparseMatrix::SquaredColumnNorm(double* x) const {
   // x = m_.colwise().square().sum(), likely because m_
   // is a row major matrix.
 
-  const int num_rows = m_.rows();
-  const int num_cols = m_.cols();
+  const int64_t num_rows = m_.rows();
+  const int64_t num_cols = m_.cols();
   std::fill_n(x, num_cols, 0.0);
   const double* m = m_.data();
-  for (int i = 0; i < num_rows; ++i) {
-    for (int j = 0; j < num_cols; ++j, ++m) {
+  for (int64_t i = 0; i < num_rows; ++i) {
+    for (int64_t j = 0; j < num_cols; ++j, ++m) {
       x[j] += (*m) * (*m);
     }
   }
@@ -95,11 +95,11 @@ void DenseSparseMatrix::ToDenseMatrix(Matrix* dense_matrix) const {
   *dense_matrix = m_;
 }
 
-int DenseSparseMatrix::num_rows() const { return m_.rows(); }
+int64_t DenseSparseMatrix::num_rows() const { return m_.rows(); }
 
-int DenseSparseMatrix::num_cols() const { return m_.cols(); }
+int64_t DenseSparseMatrix::num_cols() const { return m_.cols(); }
 
-int DenseSparseMatrix::num_nonzeros() const { return m_.rows() * m_.cols(); }
+int64_t DenseSparseMatrix::num_nonzeros() const { return static_cast<int64_t>(m_.rows()) * m_.cols(); }
 
 const Matrix& DenseSparseMatrix::matrix() const { return m_; }
 
@@ -107,8 +107,8 @@ Matrix* DenseSparseMatrix::mutable_matrix() { return &m_; }
 
 void DenseSparseMatrix::ToTextFile(FILE* file) const {
   CHECK(file != nullptr);
-  for (int r = 0; r < m_.rows(); ++r) {
-    for (int c = 0; c < m_.cols(); ++c) {
+  for (int64_t r = 0; r < m_.rows(); ++r) {
+    for (int64_t c = 0; c < m_.cols(); ++c) {
       absl::FPrintF(file, "% 10d % 10d %17f\n", r, c, m_(r, c));
     }
   }

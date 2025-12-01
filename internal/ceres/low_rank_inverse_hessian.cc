@@ -73,7 +73,7 @@ namespace ceres::internal {
 const double kLBFGSSecantConditionHessianUpdateTolerance = 1e-14;
 
 LowRankInverseHessian::LowRankInverseHessian(
-    int num_parameters,
+    int64_t num_parameters,
     int max_num_corrections,
     bool use_approximate_eigenvalue_scaling)
     : num_parameters_(num_parameters),

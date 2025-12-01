@@ -39,12 +39,12 @@
 namespace ceres::internal {
 
 void CompressedColumnScalarMatrixToBlockMatrix(
-    const int* scalar_rows,
-    const int* scalar_cols,
+    const int64_t* scalar_rows,
+    const int64_t* scalar_cols,
     const std::vector<Block>& row_blocks,
     const std::vector<Block>& col_blocks,
-    std::vector<int>* block_rows,
-    std::vector<int>* block_cols) {
+    std::vector<int64_t>* block_rows,
+    std::vector<int64_t>* block_cols) {
   CHECK(block_rows != nullptr);
   CHECK(block_cols != nullptr);
   block_rows->clear();
@@ -89,8 +89,8 @@ void CompressedColumnScalarMatrixToBlockMatrix(
 }
 
 void BlockOrderingToScalarOrdering(const std::vector<Block>& blocks,
-                                   const std::vector<int>& block_ordering,
-                                   std::vector<int>* scalar_ordering) {
+                                   const std::vector<int64_t>& block_ordering,
+                                   std::vector<int64_t>* scalar_ordering) {
   CHECK_EQ(blocks.size(), block_ordering.size());
   const int num_blocks = blocks.size();
   scalar_ordering->resize(NumScalarEntries(blocks));

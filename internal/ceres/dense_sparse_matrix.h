@@ -49,7 +49,7 @@ class CERES_NO_EXPORT DenseSparseMatrix final : public SparseMatrix {
   // m. This assumes that m does not have any repeated entries.
   explicit DenseSparseMatrix(const TripletSparseMatrix& m);
   explicit DenseSparseMatrix(Matrix m);
-  DenseSparseMatrix(int num_rows, int num_cols);
+  DenseSparseMatrix(int64_t num_rows, int64_t num_cols);
 
   // SparseMatrix interface.
   void SetZero() final;
@@ -59,9 +59,9 @@ class CERES_NO_EXPORT DenseSparseMatrix final : public SparseMatrix {
   void ScaleColumns(const double* scale) final;
   void ToDenseMatrix(Matrix* dense_matrix) const final;
   void ToTextFile(FILE* file) const final;
-  int num_rows() const final;
-  int num_cols() const final;
-  int num_nonzeros() const final;
+  int64_t num_rows() const final;
+  int64_t num_cols() const final;
+  int64_t num_nonzeros() const final;
   const double* values() const final { return m_.data(); }
   double* mutable_values() final { return m_.data(); }
 

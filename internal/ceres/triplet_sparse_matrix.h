@@ -51,11 +51,11 @@ namespace ceres::internal {
 class CERES_NO_EXPORT TripletSparseMatrix final : public SparseMatrix {
  public:
   TripletSparseMatrix();
-  TripletSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros);
-  TripletSparseMatrix(int num_rows,
-                      int num_cols,
-                      const std::vector<int>& rows,
-                      const std::vector<int>& cols,
+  TripletSparseMatrix(int64_t num_rows, int64_t num_cols, int64_t max_num_nonzeros);
+  TripletSparseMatrix(int64_t num_rows,
+                      int64_t num_cols,
+                      const std::vector<int64_t>& rows,
+                      const std::vector<int64_t>& cols,
                       const std::vector<double>& values);
 
   TripletSparseMatrix(const TripletSparseMatrix& orig);
@@ -74,13 +74,20 @@ class CERES_NO_EXPORT TripletSparseMatrix final : public SparseMatrix {
   void ToDenseMatrix(Matrix* dense_matrix) const final;
   void ToTextFile(FILE* file) const final;
   // clang-format off
-  int num_rows()        const final   { return num_rows_;     }
-  int num_cols()        const final   { return num_cols_;     }
-  int num_nonzeros()    const final   { return num_nonzeros_; }
+  int64_t num_rows()        const final   { return num_rows_;     }
+  int64_t num_cols()        const final   { return num_cols_;     }
+  int64_t num_nonzeros()    const final   { return num_nonzeros_; }
   const double* values()  const final { return values_.get(); }
   double* mutable_values() final      { return values_.get(); }
   // clang-format on
-  void set_num_nonzeros(int num_nonzeros);
+  void set_num_nonzeros(int64_t num_nonzeros);
+
+  // Increase max_num_nonzeros and correspondingly increase the size
+  // of rows_, cols_ and values_. If new_max_num_nonzeros is smaller
+  // than max_num_nonzeros_, then num_non_zeros should be less than or
+  // equal to new_max_num_nonzeros, otherwise data loss is possible
+  // and the method crashes.
+  void Reserve(int64_t new_max_num_nonzeros);
 
   // Increase max_num_nonzeros and correspondingly increase the size
   // of rows_, cols_ and values_. If new_max_num_nonzeros is smaller
@@ -99,14 +106,14 @@ class CERES_NO_EXPORT TripletSparseMatrix final : public SparseMatrix {
 
   // Resize the matrix. Entries which fall outside the new matrix
   // bounds are dropped and the num_non_zeros changed accordingly.
-  void Resize(int new_num_rows, int new_num_cols);
+  void Resize(int64_t new_num_rows, int64_t new_num_cols);
 
   // clang-format off
-  int max_num_nonzeros() const { return max_num_nonzeros_; }
-  const int* rows()      const { return rows_.get();       }
-  const int* cols()      const { return cols_.get();       }
-  int* mutable_rows()          { return rows_.get();       }
-  int* mutable_cols()          { return cols_.get();       }
+  int64_t max_num_nonzeros() const { return max_num_nonzeros_; }
+  const int64_t* rows()      const { return rows_.get();       }
+  const int64_t* cols()      const { return cols_.get();       }
+  int64_t* mutable_rows()          { return rows_.get();       }
+  int64_t* mutable_cols()          { return cols_.get();       }
   // clang-format on
 
   // Returns true if the entries of the matrix obey the row, column,
@@ -119,13 +126,13 @@ class CERES_NO_EXPORT TripletSparseMatrix final : public SparseMatrix {
   // the array values. Entries of the values array are copied into the
   // sparse matrix.
   static std::unique_ptr<TripletSparseMatrix> CreateSparseDiagonalMatrix(
-      const double* values, int num_rows);
+      const double* values, int64_t num_rows);
 
   // Options struct to control the generation of random
   // TripletSparseMatrix objects.
   struct RandomMatrixOptions {
-    int num_rows;
-    int num_cols;
+    int64_t num_rows;
+    int64_t num_cols;
     // 0 < density <= 1 is the probability of an entry being
     // structurally non-zero. A given random matrix will not have
     // precisely this density.
@@ -146,17 +153,17 @@ class CERES_NO_EXPORT TripletSparseMatrix final : public SparseMatrix {
   void AllocateMemory();
   void CopyData(const TripletSparseMatrix& orig);
 
-  int num_rows_;
-  int num_cols_;
-  int max_num_nonzeros_;
-  int num_nonzeros_;
+  int64_t num_rows_;
+  int64_t num_cols_;
+  int64_t max_num_nonzeros_;
+  int64_t num_nonzeros_;
 
   // The data is stored as three arrays. For each i, values_[i] is
   // stored at the location (rows_[i], cols_[i]). If the there are
   // multiple entries with the same (rows_[i], cols_[i]), the values_
   // entries corresponding to them are summed up.
-  std::unique_ptr<int[]> rows_;
-  std::unique_ptr<int[]> cols_;
+  std::unique_ptr<int64_t[]> rows_;
+  std::unique_ptr<int64_t[]> cols_;
   std::unique_ptr<double[]> values_;
 };
 

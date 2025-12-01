@@ -58,21 +58,21 @@ inline decltype(auto) MakeConditionalLock(const int num_threads,
 // or a range of loop indices; function can also be supplied with thread_id.
 // The following function signatures are supported:
 //  - Functions accepting a single loop index:
-//     - [](int index) { ... }
-//     - [](int thread_id, int index) { ... }
+//     - [](int64_t index) { ... }
+//     - [](int thread_id, int64_t index) { ... }
 //  - Functions accepting a range of loop index:
-//     - [](std::tuple<int, int> index) { ... }
-//     - [](int thread_id, std::tuple<int, int> index) { ... }
+//     - [](std::tuple<int64_t, int64_t> index) { ... }
+//     - [](int thread_id, std::tuple<int64_t, int64_t> index) { ... }
 //
 // When distributing workload between threads, it is assumed that each loop
 // iteration takes approximately equal time to complete.
 template <typename F>
 void ParallelFor(ContextImpl* context,
-                 int start,
-                 int end,
+                 int64_t start,
+                 int64_t end,
                  int num_threads,
                  F&& function,
-                 int min_block_size = 1) {
+                 int64_t min_block_size = 1) {
   CHECK_GT(num_threads, 0);
   if (start >= end) {
     return;
@@ -99,11 +99,11 @@ void ParallelFor(ContextImpl* context,
 // time to process.
 template <typename F>
 void ParallelFor(ContextImpl* context,
-                 int start,
-                 int end,
+                 int64_t start,
+                 int64_t end,
                  int num_threads,
                  F&& function,
-                 const std::vector<int>& partitions) {
+                 const std::vector<int64_t>& partitions) {
   CHECK_GT(num_threads, 0);
   if (start >= end) {
     return;
@@ -121,14 +121,14 @@ void ParallelFor(ContextImpl* context,
               num_partitions,
               num_threads,
               [&function, &partitions](int thread_id,
-                                       std::tuple<int, int> partition_ids) {
+                                       std::tuple<int64_t, int64_t> partition_ids) {
                 // partition_ids is a range of partition indices
                 const auto [partition_start, partition_end] = partition_ids;
                 // Execution over several adjacent segments is equivalent
                 // to execution over union of those segments (which is also a
                 // contiguous segment)
-                const int range_start = partitions[partition_start];
-                const int range_end = partitions[partition_end];
+                const int64_t range_start = partitions[partition_start];
+                const int64_t range_end = partitions[partition_end];
                 // Range of original loop indices
                 const auto range = std::make_tuple(range_start, range_end);
                 InvokeOnSegment(thread_id, range, function);
@@ -153,8 +153,8 @@ void ParallelFor(ContextImpl* context,
 // [2, 5, 4, 4].
 template <typename F, typename CumulativeCostData, typename CumulativeCostFun>
 void ParallelFor(ContextImpl* context,
-                 int start,
-                 int end,
+                 int64_t start,
+                 int64_t end,
                  int num_threads,
                  F&& function,
                  const CumulativeCostData* cumulative_cost_data,

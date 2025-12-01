@@ -41,19 +41,19 @@ namespace ceres::internal {
 BlockRandomAccessDenseMatrix::BlockRandomAccessDenseMatrix(
     std::vector<Block> blocks, ContextImpl* context, int num_threads)
     : blocks_(std::move(blocks)), context_(context), num_threads_(num_threads) {
-  const int num_blocks = blocks_.size();
+  const int64_t num_blocks = blocks_.size();
   num_rows_ = NumScalarEntries(blocks_);
   values_ = std::make_unique<double[]>(num_rows_ * num_rows_);
   cell_infos_ = std::make_unique<CellInfo[]>(num_blocks * num_blocks);
-  for (int i = 0; i < num_blocks * num_blocks; ++i) {
+  for (int64_t i = 0; i < num_blocks * num_blocks; ++i) {
     cell_infos_[i].values = values_.get();
   }
 
   SetZero();
 }
 
-CellInfo* BlockRandomAccessDenseMatrix::GetCell(const int row_block_id,
-                                                const int col_block_id,
+CellInfo* BlockRandomAccessDenseMatrix::GetCell(const int64_t row_block_id,
+                                                const int64_t col_block_id,
                                                 int* row,
                                                 int* col,
                                                 int* row_stride,

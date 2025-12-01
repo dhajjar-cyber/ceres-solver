@@ -53,10 +53,10 @@ using BlockSize = int32_t;
 
 struct CERES_NO_EXPORT Block {
   Block() = default;
-  Block(int size_, int position_) noexcept : size(size_), position(position_) {}
+  Block(int size_, int64_t position_) noexcept : size(size_), position(position_) {}
 
   BlockSize size{-1};
-  int position{-1};  // Position along the row/column.
+  int64_t position{-1};  // Position along the row/column.
 };
 
 inline bool operator==(const Block& left, const Block& right) noexcept {
@@ -65,13 +65,13 @@ inline bool operator==(const Block& left, const Block& right) noexcept {
 
 struct CERES_NO_EXPORT Cell {
   Cell() = default;
-  Cell(int block_id_, int position_) noexcept
+  Cell(int64_t block_id_, int64_t position_) noexcept
       : block_id(block_id_), position(position_) {}
 
   // Column or row block id as the case maybe.
-  int block_id{-1};
+  int64_t block_id{-1};
   // Where in the values array of the jacobian is this cell located.
-  int position{-1};
+  int64_t position{-1};
 };
 
 // Order cell by their block_id;
@@ -86,10 +86,10 @@ struct CERES_NO_EXPORT CompressedList {
   Block block;
   std::vector<Cell> cells;
   // Number of non-zeros in cells of this row block
-  int nnz{-1};
+  int64_t nnz{-1};
   // Number of non-zeros in cells of this and every preceeding row block in
   // block-sparse matrix
-  int cumulative_nnz{-1};
+  int64_t cumulative_nnz{-1};
 };
 
 using CompressedRow = CompressedList;
@@ -181,7 +181,7 @@ struct CERES_NO_EXPORT CompressedColumnBlockStructure {
   std::vector<CompressedColumn> cols;
 };
 
-inline int NumScalarEntries(const std::vector<Block>& blocks) {
+inline int64_t NumScalarEntries(const std::vector<Block>& blocks) {
   if (blocks.empty()) {
     return 0;
   }

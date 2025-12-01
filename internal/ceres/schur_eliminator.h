@@ -181,7 +181,7 @@ class CERES_NO_EXPORT SchurEliminatorBase {
   // assume_full_rank_ete is true, then a Cholesky factorization is
   // used to compute the inverse, otherwise a singular value
   // decomposition is used to compute the pseudo inverse.
-  virtual void Init(int num_eliminate_blocks,
+  virtual void Init(int64_t num_eliminate_blocks,
                     bool assume_full_rank_ete,
                     const CompressedRowBlockStructure* bs) = 0;
 
@@ -234,7 +234,7 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
 
   // SchurEliminatorBase Interface
   ~SchurEliminator() override;
-  void Init(int num_eliminate_blocks,
+  void Init(int64_t num_eliminate_blocks,
             bool assume_full_rank_ete,
             const CompressedRowBlockStructure* bs) final;
   void Eliminate(const BlockSparseMatrixData& A,
@@ -274,11 +274,11 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
   // buffer_layout[z1] = 0
   // buffer_layout[z5] = y1 * z1
   // buffer_layout[z2] = y1 * z1 + y1 * z5
-  using BufferLayoutType = absl::btree_map<int, int>;
+  using BufferLayoutType = absl::btree_map<int64_t, int64_t>;
   struct Chunk {
-    explicit Chunk(int start) : size(0), start(start) {}
+    explicit Chunk(int64_t start) : size(0), start(start) {}
     int size;
-    int start;
+    int64_t start;
     BufferLayoutType buffer_layout;
   };
 
@@ -286,7 +286,7 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
       const Chunk& chunk,
       const BlockSparseMatrixData& A,
       const double* b,
-      int row_block_counter,
+      int64_t row_block_counter,
       typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix* eet,
       double* g,
       double* buffer,
@@ -295,7 +295,7 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
   void UpdateRhs(const Chunk& chunk,
                  const BlockSparseMatrixData& A,
                  const double* b,
-                 int row_block_counter,
+                 int64_t row_block_counter,
                  const double* inverse_ete_g,
                  double* rhs);
 
@@ -306,22 +306,22 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
                          const BufferLayoutType& buffer_layout,
                          BlockRandomAccessMatrix* lhs);
   void EBlockRowOuterProduct(const BlockSparseMatrixData& A,
-                             int row_block_index,
+                             int64_t row_block_index,
                              BlockRandomAccessMatrix* lhs);
 
   void NoEBlockRowsUpdate(const BlockSparseMatrixData& A,
                           const double* b,
-                          int row_block_counter,
+                          int64_t row_block_counter,
                           BlockRandomAccessMatrix* lhs,
                           double* rhs);
 
   void NoEBlockRowOuterProduct(const BlockSparseMatrixData& A,
-                               int row_block_index,
+                               int64_t row_block_index,
                                BlockRandomAccessMatrix* lhs);
 
   int num_threads_;
   ContextImpl* context_;
-  int num_eliminate_blocks_;
+  int64_t num_eliminate_blocks_;
   bool assume_full_rank_ete_;
 
   // Block layout of the columns of the reduced linear system. Since
@@ -329,7 +329,7 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
   // position of each f block in the row/col of the reduced linear
   // system. Thus lhs_row_layout_[i] is the row/col position of the
   // i^th f block.
-  std::vector<int> lhs_row_layout_;
+  std::vector<int64_t> lhs_row_layout_;
 
   // Combinatorial structure of the chunks in A. For more information
   // see the documentation of the Chunk object above.
@@ -354,8 +354,8 @@ class CERES_NO_EXPORT SchurEliminator final : public SchurEliminatorBase {
   //
   std::unique_ptr<double[]> chunk_outer_product_buffer_;
 
-  int buffer_size_;
-  int uneliminated_row_begins_;
+  int64_t buffer_size_;
+  int64_t uneliminated_row_begins_;
 
   // Locks for the blocks in the right hand side of the reduced linear
   // system.
@@ -384,7 +384,7 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
     : public SchurEliminatorBase {
  public:
   // TODO(sameeragarwal) Find out why "assume_full_rank_ete" is not used here
-  void Init(int num_eliminate_blocks,
+  void Init(int64_t num_eliminate_blocks,
             bool /*assume_full_rank_ete*/,
             const CompressedRowBlockStructure* bs) override {
     CHECK_GT(num_eliminate_blocks, 0)
@@ -393,14 +393,14 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
     CHECK_EQ(bs->cols.size() - num_eliminate_blocks, 1);
 
     num_eliminate_blocks_ = num_eliminate_blocks;
-    const int num_row_blocks = bs->rows.size();
+    const int64_t num_row_blocks = bs->rows.size();
     chunks_.clear();
-    int r = 0;
+    int64_t r = 0;
     // Iterate over the row blocks of A, and detect the chunks. The
     // matrix should already have been ordered so that all rows
     // containing the same y block are vertically contiguous.
     while (r < num_row_blocks) {
-      const int e_block_id = bs->rows[r].cells.front().block_id;
+      const int64_t e_block_id = bs->rows[r].cells.front().block_id;
       if (e_block_id >= num_eliminate_blocks_) {
         break;
       }
@@ -476,9 +476,9 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
     //
     // lhs += sum_i f_i^T * f_i - e_t_f^T * e_t_e_inverse * e_t_f
     // rhs += f_t_b - e_t_f^T * e_t_e_inverse * e_t_b
-    for (int i = 0; i < chunks_.size(); ++i) {
+    for (int64_t i = 0; i < chunks_.size(); ++i) {
       const Chunk& chunk = chunks_[i];
-      const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+      const int64_t e_block_id = bs->rows[chunk.start].cells.front().block_id;
 
       // Naming convention, e_t_e = e_block.transpose() * e_block;
       Eigen::Matrix<double, kEBlockSize, kEBlockSize> e_t_e;
@@ -498,8 +498,8 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
       e_t_b.setZero();
       f_t_b.setZero();
 
-      for (int j = 0; j < chunk.num_rows; ++j) {
-        const int row_id = chunk.start + j;
+      for (int64_t j = 0; j < chunk.num_rows; ++j) {
+        const int64_t row_id = chunk.start + j;
         const auto& row = bs->rows[row_id];
         const typename EigenTypes<kRowBlockSize, kEBlockSize>::ConstMatrixRef
             e_block(values + row.cells[0].position, kRowBlockSize, kEBlockSize);
@@ -552,7 +552,7 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
     //
     // lhs += f_i^T f_i
     // rhs += f_i^T b_i
-    for (int row_id = uneliminated_row_begins_; row_id < bs->rows.size();
+    for (int64_t row_id = uneliminated_row_begins_; row_id < bs->rows.size();
          ++row_id) {
       const auto& row = bs->rows[row_id];
       const auto& cell = row.cells[0];
@@ -578,12 +578,12 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
     const CompressedRowBlockStructure* bs = A.block_structure();
     const double* values = A.values();
     Eigen::Matrix<double, kEBlockSize, 1> tmp;
-    for (int i = 0; i < chunks_.size(); ++i) {
+    for (int64_t i = 0; i < chunks_.size(); ++i) {
       const Chunk& chunk = chunks_[i];
-      const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+      const int64_t e_block_id = bs->rows[chunk.start].cells.front().block_id;
       tmp.setZero();
-      for (int j = 0; j < chunk.num_rows; ++j) {
-        const int row_id = chunk.start + j;
+      for (int64_t j = 0; j < chunk.num_rows; ++j) {
+        const int64_t row_id = chunk.start + j;
         const auto& row = bs->rows[row_id];
         const typename EigenTypes<kRowBlockSize, kEBlockSize>::ConstMatrixRef
             e_block(values + row.cells[0].position, kRowBlockSize, kEBlockSize);
@@ -614,13 +614,13 @@ class CERES_NO_EXPORT SchurEliminatorForOneFBlock final
 
  private:
   struct Chunk {
-    int start = 0;
-    int num_rows = 0;
+    int64_t start = 0;
+    int64_t num_rows = 0;
   };
 
   std::vector<Chunk> chunks_;
-  int num_eliminate_blocks_;
-  int uneliminated_row_begins_;
+  int64_t num_eliminate_blocks_;
+  int64_t uneliminated_row_begins_;
   std::vector<double> e_t_e_inverse_matrices_;
 };
 

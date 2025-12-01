@@ -60,7 +60,7 @@ namespace {
 struct RowColLessThan {
   RowColLessThan(const int* rows, const int* cols) : rows(rows), cols(cols) {}
 
-  bool operator()(const int x, const int y) const {
+  bool operator()(const int64_t x, const int64_t y) const {
     if (rows[x] == rows[y]) {
       return (cols[x] < cols[y]);
     }
@@ -71,27 +71,27 @@ struct RowColLessThan {
   const int* cols;
 };
 
-void TransposeForCompressedRowSparseStructure(const int num_rows,
-                                              const int num_cols,
-                                              const int num_nonzeros,
-                                              const int* rows,
-                                              const int* cols,
+void TransposeForCompressedRowSparseStructure(const int64_t num_rows,
+                                              const int64_t num_cols,
+                                              const int64_t num_nonzeros,
+                                              const int64_t* rows,
+                                              const int64_t* cols,
                                               const double* values,
-                                              int* transpose_rows,
-                                              int* transpose_cols,
+                                              int64_t* transpose_rows,
+                                              int64_t* transpose_cols,
                                               double* transpose_values) {
   // Explicitly zero out transpose_rows.
   std::fill(transpose_rows, transpose_rows + num_cols + 1, 0);
 
   // Count the number of entries in each column of the original matrix
   // and assign to transpose_rows[col + 1].
-  for (int idx = 0; idx < num_nonzeros; ++idx) {
+  for (int64_t idx = 0; idx < num_nonzeros; ++idx) {
     ++transpose_rows[cols[idx] + 1];
   }
 
   // Compute the starting position for each row in the transpose by
   // computing the cumulative sum of the entries of transpose_rows.
-  for (int i = 1; i < num_cols + 1; ++i) {
+  for (int64_t i = 1; i < num_cols + 1; ++i) {
     transpose_rows[i] += transpose_rows[i - 1];
   }
 
@@ -101,10 +101,10 @@ void TransposeForCompressedRowSparseStructure(const int num_rows,
   // to keep track of where the next entry for that row should go.
   //
   // As a result transpose_row is shifted to the left by one entry.
-  for (int r = 0; r < num_rows; ++r) {
-    for (int idx = rows[r]; idx < rows[r + 1]; ++idx) {
-      const int c = cols[idx];
-      const int transpose_idx = transpose_rows[c]++;
+  for (int64_t r = 0; r < num_rows; ++r) {
+    for (int64_t idx = rows[r]; idx < rows[r + 1]; ++idx) {
+      const int64_t c = cols[idx];
+      const int64_t transpose_idx = transpose_rows[c]++;
       transpose_cols[transpose_idx] = r;
       if (values != nullptr && transpose_values != nullptr) {
         transpose_values[transpose_idx] = values[idx];
@@ -114,7 +114,7 @@ void TransposeForCompressedRowSparseStructure(const int num_rows,
 
   // This loop undoes the left shift to transpose_rows introduced by
   // the previous loop.
-  for (int i = num_cols - 1; i > 0; --i) {
+  for (int64_t i = num_cols - 1; i > 0; --i) {
     transpose_rows[i] = transpose_rows[i - 1];
   }
   transpose_rows[0] = 0;
@@ -163,9 +163,9 @@ void AddSymmetricRandomBlock(const int num_rows,
 }  // namespace
 
 // This constructor gives you a semi-initialized CompressedRowSparseMatrix.
-CompressedRowSparseMatrix::CompressedRowSparseMatrix(int num_rows,
-                                                     int num_cols,
-                                                     int max_num_nonzeros) {
+CompressedRowSparseMatrix::CompressedRowSparseMatrix(int64_t num_rows,
+                                                     int64_t num_cols,
+                                                     int64_t max_num_nonzeros) {
   num_rows_ = num_rows;
   num_cols_ = num_cols;
   storage_type_ = StorageType::UNSYMMETRIC;
@@ -175,8 +175,8 @@ CompressedRowSparseMatrix::CompressedRowSparseMatrix(int num_rows,
 
   VLOG(1) << "# of rows: " << num_rows_ << " # of columns: " << num_cols_
           << " max_num_nonzeros: " << cols_.size() << ". Allocating "
-          << (num_rows_ + 1) * sizeof(int) +     // NOLINT
-                 cols_.size() * sizeof(int) +    // NOLINT
+          << (num_rows_ + 1) * sizeof(int64_t) +     // NOLINT
+                 cols_.size() * sizeof(int64_t) +    // NOLINT
                  cols_.size() * sizeof(double);  // NOLINT
 }
 
@@ -207,8 +207,8 @@ CompressedRowSparseMatrix::FromTripletSparseMatrix(
   }
 
   // index is the list of indices into the TripletSparseMatrix input.
-  std::vector<int> index(input.num_nonzeros(), 0);
-  for (int i = 0; i < input.num_nonzeros(); ++i) {
+  std::vector<int64_t> index(input.num_nonzeros(), 0);
+  for (int64_t i = 0; i < input.num_nonzeros(); ++i) {
     index[i] = i;
   }
 
@@ -218,8 +218,8 @@ CompressedRowSparseMatrix::FromTripletSparseMatrix(
 
   VLOG(1) << "# of rows: " << num_rows << " # of columns: " << num_cols
           << " num_nonzeros: " << input.num_nonzeros() << ". Allocating "
-          << ((num_rows + 1) * sizeof(int) +           // NOLINT
-              input.num_nonzeros() * sizeof(int) +     // NOLINT
+          << ((num_rows + 1) * sizeof(int64_t) +           // NOLINT
+              input.num_nonzeros() * sizeof(int64_t) +     // NOLINT
               input.num_nonzeros() * sizeof(double));  // NOLINT
 
   auto output = std::make_unique<CompressedRowSparseMatrix>(
@@ -232,13 +232,13 @@ CompressedRowSparseMatrix::FromTripletSparseMatrix(
 
   // Copy the contents of the cols and values array in the order given
   // by index and count the number of entries in each row.
-  int* output_rows = output->mutable_rows();
-  int* output_cols = output->mutable_cols();
+  int64_t* output_rows = output->mutable_rows();
+  int64_t* output_cols = output->mutable_cols();
   double* output_values = output->mutable_values();
 
   output_rows[0] = 0;
-  for (int i = 0; i < index.size(); ++i) {
-    const int idx = index[i];
+  for (int64_t i = 0; i < index.size(); ++i) {
+    const int64_t idx = index[i];
     ++output_rows[rows[idx] + 1];
     output_cols[i] = cols[idx];
     output_values[i] = values[idx];
@@ -294,7 +294,7 @@ void CompressedRowSparseMatrix::RightMultiplyAndAccumulate(
   auto cols = cols_.data();
 
   ParallelFor(
-      context, 0, num_rows_, num_threads, [values, rows, cols, x, y](int row) {
+      context, 0, num_rows_, num_threads, [values, rows, cols, x, y](int64_t row) {
         for (int idx = rows[row]; idx < rows[row + 1]; ++idx) {
           const int c = cols[idx];
           const double v = values[idx];
@@ -551,7 +551,7 @@ void CompressedRowSparseMatrix::ToCRSMatrix(CRSMatrix* matrix) const {
   matrix->values.resize(matrix->rows[matrix->num_rows]);
 }
 
-void CompressedRowSparseMatrix::SetMaxNumNonZeros(int num_nonzeros) {
+void CompressedRowSparseMatrix::SetMaxNumNonZeros(int64_t num_nonzeros) {
   CHECK_GE(num_nonzeros, 0);
 
   cols_.resize(num_nonzeros);

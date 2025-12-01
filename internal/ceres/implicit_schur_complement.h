@@ -135,8 +135,8 @@ class CERES_NO_EXPORT ImplicitSchurComplement final : public LinearOperator {
   // complement.
   void BackSubstitute(const double* x, double* y);
 
-  int num_rows() const final { return A_->num_cols_f(); }
-  int num_cols() const final { return A_->num_cols_f(); }
+  int64_t num_rows() const final { return A_->num_cols_f(); }
+  int64_t num_cols() const final { return A_->num_cols_f(); }
   const Vector& rhs() const { return rhs_; }
 
   const BlockSparseMatrix* block_diagonal_EtE_inverse() const {
